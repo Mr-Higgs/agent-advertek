@@ -1,0 +1,26 @@
+# Advertek Agent Rail
+
+This project is an MCP server and REST API that lets AI agents order print
+production from Advertek, including offset, digital, wide-format, packaging,
+print-on-demand, and direct-mail jobs. Orders are paid in USDC on Solana.
+
+## Stack
+
+- Use TypeScript and Node.js.
+- Use `@modelcontextprotocol/sdk` for the MCP server.
+- Use `@solana/web3.js` and `@solana/spl-token` for payments.
+- Use QuickNode as the Solana RPC provider. Read its endpoint from
+  `QUICKNODE_RPC_URL`; never hardcode it.
+- Use OKX REST API v5 for treasury sweeps and fiat settlement.
+- Validate every external input, including agent specifications and webhook
+  payloads, with Zod.
+
+## Conventions
+
+- Never put secrets, private keys, or API keys in code. Load all secrets from
+  environment variables through one centralized config module.
+- Add an explicit unit test for every payment-related function before treating
+  it as complete.
+- Prefer small, single-purpose modules over large files.
+- Represent all monetary amounts as integers in their smallest unit, such as
+  lamports or USDC base units. Never use floating-point values for money.
