@@ -15,10 +15,17 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run --passWithNoTests",
     "lint": "eslint src",
-    "clean": "rm -rf dist coverage"
+    "clean": "rm -rf dist coverage",
+    "live-check": "node scripts/okx-demo-live-check.mjs"
   },
   "dependencies": {
+    "@advertek/payments": "workspace:*",
     "@advertek/types": "workspace:*",
+    "@solana/spl-token": "^0.4.13",
+    "@solana/web3.js": "^1.98.2",
     "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "vitest": "^3.2.4"
   }
 }
