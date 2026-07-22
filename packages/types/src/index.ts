@@ -6,6 +6,23 @@ export type PrintProcess =
   | "print-on-demand"
   | "direct-mail";
 
+export {
+  dimensionsSchema,
+  finishSchema,
+  productLineSchema,
+  skuSpecSchema,
+  stockSchema,
+  turnaroundSchema,
+} from "./sku-spec.js";
+export type {
+  Dimensions,
+  Finish,
+  ProductLine,
+  SkuSpec,
+  Stock,
+  Turnaround,
+} from "./sku-spec.js";
+
 export type BaseUnitAmount = bigint;
 
 export interface Money {
