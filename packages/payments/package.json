@@ -13,14 +13,18 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "vitest run --passWithNoTests",
+    "test": "vitest run",
     "lint": "eslint src",
-    "clean": "rm -rf dist coverage"
+    "clean": "rm -rf dist coverage",
+    "live-check": "node scripts/devnet-live-check.mjs"
   },
   "dependencies": {
     "@advertek/types": "workspace:*",
     "@solana/spl-token": "^0.4.13",
     "@solana/web3.js": "^1.98.2",
     "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "vitest": "^3.2.4"
   }
 }
