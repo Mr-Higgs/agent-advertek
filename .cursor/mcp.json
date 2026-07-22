@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "advertek-agent-rail": {
+      "command": "node",
+      "args": [
+        "packages/mcp-server/dist/stdio-main.js"
+      ]
+    }
+  }
+}

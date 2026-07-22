@@ -9,18 +9,26 @@
       "default": "./dist/index.js"
     }
   },
+  "bin": {
+    "advertek-mcp-server": "./dist/stdio-main.js"
+  },
   "files": ["dist"],
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "vitest run --passWithNoTests",
+    "test": "vitest run",
     "lint": "eslint src",
-    "clean": "rm -rf dist coverage"
+    "clean": "rm -rf dist coverage",
+    "start": "node dist/stdio-main.js"
   },
   "dependencies": {
     "@advertek/catalog": "workspace:*",
+    "@advertek/quote-api": "workspace:*",
     "@advertek/types": "workspace:*",
     "@modelcontextprotocol/sdk": "^1.17.0",
     "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "vitest": "^3.2.4"
   }
 }
