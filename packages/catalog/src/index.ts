@@ -23,3 +23,11 @@ export interface CatalogRepository {
 export function parseSku(input: unknown): Sku {
   return skuSchema.parse(input);
 }
+
+export {
+  PRODUCT_LINE_TO_PRINT_PROCESS,
+  isKnownProductLine,
+  mapProductLineToPrintProcess,
+  mapSkuSpecToPrintProcess,
+  resolvePrintProcessFromUnknown,
+} from "./product-line-map.js";
