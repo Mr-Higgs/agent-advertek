@@ -1,0 +1,32 @@
+{
+  "name": "@advertek/db",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": ["dist", "migrations"],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "lint": "eslint src",
+    "clean": "rm -rf dist coverage"
+  },
+  "dependencies": {
+    "@advertek/fulfillment": "workspace:*",
+    "@advertek/payments": "workspace:*",
+    "@advertek/treasury": "workspace:*",
+    "@advertek/types": "workspace:*",
+    "@advertek/webhooks": "workspace:*",
+    "postgres": "^3.4.9",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "vitest": "^3.2.4"
+  }
+}

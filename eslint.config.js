@@ -5,12 +5,12 @@ import tseslint from "typescript-eslint";
 
 export default tseslint.config(
   {
-    ignores: ["**/dist/**", "**/coverage/**"],
+    ignores: ["**/dist/**", "**/coverage/**", "**/.next/**", "**/next-env.d.ts"],
   },
   eslint.configs.recommended,
   ...tseslint.configs.strictTypeChecked,
   {
-    files: ["packages/**/*.ts", "packages/**/*.tsx"],
+    files: ["packages/**/*.ts", "packages/**/*.tsx", "apps/**/*.ts", "apps/**/*.tsx"],
     languageOptions: {
       parserOptions: {
         projectService: true,
@@ -19,7 +19,7 @@ export default tseslint.config(
     },
   },
   {
-    files: ["packages/site/src/**/*.tsx"],
+    files: ["packages/site/src/**/*.tsx", "apps/web/components/**/*.tsx"],
     plugins: {
       "react-hooks": reactHooks,
       "react-refresh": reactRefresh,

@@ -30,3 +30,12 @@ export interface WebhookDispatcher {
     event: OrderStatusEvent,
   ): Promise<void>;
 }
+
+export {
+  createHttpWebhookDispatcher,
+  signWebhookBody,
+  SIGNATURE_HEADER,
+  WebhookDispatchError,
+  type FetchLike,
+  type HttpWebhookDispatcherDeps,
+} from "./http-dispatcher.js";

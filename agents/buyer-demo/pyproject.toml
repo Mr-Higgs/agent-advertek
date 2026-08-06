@@ -1,0 +1,45 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "buyer-demo"
+version = "0.1.0"
+description = "Reference buyer agent that dogfoods the Advertek agent rail end-to-end on Solana devnet"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    # LangChain's LangGraph-based "deep agent" harness.
+    "deepagents>=0.2,<1.0",
+    # Loads MCP tools (streamable HTTP) as LangChain tools.
+    "langchain-mcp-adapters>=0.1.7",
+    # Default LLM provider for the agent loop (override via BUYER_AGENT_MODEL).
+    "langchain-anthropic>=0.3",
+    # Solana primitives (keypairs, pubkeys, transactions, instructions).
+    "solders>=0.21",
+    # solana-py: RPC client + bundled spl.token instruction builders.
+    "solana>=0.34",
+    "python-dotenv>=1.0",
+]
+
+[project.scripts]
+buyer-demo = "buyer_demo.agent:main"
+
+[dependency-groups]
+dev = [
+    "ruff>=0.6",
+    "pytest>=8.0",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/buyer_demo"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+target-version = "py311"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]

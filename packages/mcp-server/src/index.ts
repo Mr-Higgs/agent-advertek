@@ -1,5 +1,6 @@
 export {
   createAdvertekMcpServer,
+  registerAdvertekTools,
   type AdvertekMcpServerDeps,
 } from "./create-server.js";
 export {

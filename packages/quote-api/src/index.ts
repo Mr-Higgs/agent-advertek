@@ -1,35 +1,7 @@
-import type { Quote, QuoteRequest } from "@advertek/types";
-import Fastify, { type FastifyInstance } from "fastify";
-import { z } from "zod";
-
-export const quoteRequestSchema = z.object({
-  skuId: z.string().min(1),
-  quantity: z.number().int().positive(),
-  specification: z.record(z.unknown()),
-}) satisfies z.ZodType<QuoteRequest>;
-
-export type QuoteCalculator = (request: QuoteRequest) => Promise<Quote>;
-
-export function buildQuoteApi(calculateQuote: QuoteCalculator): FastifyInstance {
-  const app = Fastify();
-
-  app.post("/quotes", async (request, reply) => {
-    const quoteRequest = quoteRequestSchema.parse(request.body);
-    const quote = await calculateQuote(quoteRequest);
-
-    return reply.send({
-      ...quote,
-      total: {
-        ...quote.total,
-        amountBaseUnits: quote.total.amountBaseUnits.toString(),
-      },
-      expiresAt: quote.expiresAt.toISOString(),
-    });
-  });
-
-  return app;
-}
-
+export {
+  quoteRequestSchema,
+  type QuoteCalculator,
+} from "./quote-request.js";
 export type { AdvertekPricingClient } from "./advertek-pricing-client.js";
 export type { SpotRateClient } from "./spot-rate-client.js";
 export { convertCadCentsToUsdcBaseUnits } from "./spot-rate-client.js";

@@ -1,0 +1,13 @@
+var R=require("../chunks/ssr/[turbopack]_runtime.js")("server/app/page.js")
+R.c("server/chunks/ssr/[root-of-the-server]__1cdrniq._.js")
+R.c("server/chunks/ssr/1r_d_next_dist_esm_build_templates_app-page_028xhbt.js")
+R.c("server/chunks/ssr/[root-of-the-server]__17mulwb._.js")
+R.c("server/chunks/ssr/1r_d_next_dist_1gsco-g._.js")
+R.c("server/chunks/ssr/Desktop_advertek-agent-rail_apps_web_app_layout_tsx_1_31n2r._.js")
+R.c("server/chunks/ssr/1r_d_next_dist_client_components_1dp1nnt._.js")
+R.c("server/chunks/ssr/1r_d_next_dist_client_components_builtin_forbidden_17pkk-v.js")
+R.c("server/chunks/ssr/1r_d_next_dist_client_components_builtin_unauthorized_11f8o11.js")
+R.c("server/chunks/ssr/1r_d_next_dist_client_components_builtin_global-error_1ai9a62.js")
+R.c("server/chunks/ssr/0im4_advertek-agent-rail_apps_web__next-internal_server_app_page_actions_06355eu.js")
+R.m(21852)
+module.exports=R.m(21852).exports

@@ -56,7 +56,20 @@ export function createAdvertekMcpServer(
     name: "advertek-agent-rail",
     version: "0.0.0",
   });
+  registerAdvertekTools(server, deps);
+  return server;
+}
 
+/**
+ * Registers the Advertek tools on an existing MCP server instance. Shared by
+ * the stdio server (via {@link createAdvertekMcpServer}) and the remote
+ * Streamable HTTP endpoint in `apps/web` (via `mcp-handler`), so both
+ * transports serve identical tools from one source of truth.
+ */
+export function registerAdvertekTools(
+  server: McpServer,
+  deps: AdvertekMcpServerDeps,
+): void {
   server.registerTool(
     "get_catalog",
     {
@@ -107,8 +120,6 @@ export function createAdvertekMcpServer(
       };
     },
   );
-
-  return server;
 }
 
 export {
