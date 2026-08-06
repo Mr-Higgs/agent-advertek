@@ -185,6 +185,7 @@ export function IntegrationExplorer({ theme: t }: IntegrationExplorerProps) {
         }
       }
       setFieldErrors(nextErrors);
+      setQuoteState({ status: "idle" });
       return;
     }
 
