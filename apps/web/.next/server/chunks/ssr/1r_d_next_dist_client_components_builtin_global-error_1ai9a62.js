@@ -1,3 +1,0 @@
-module.exports=[56675,(a,b,c)=>{let{createClientModuleProxy:d}=a.r(89071);a.n(d("[project]/Desktop/advertek-agent-rail/node_modules/.pnpm/next@16.2.11_@babel+core@7.29.7_react-dom@19.2.8_react@19.2.8__react@19.2.8/node_modules/next/dist/client/components/builtin/global-error.js <module evaluation>"))},48583,(a,b,c)=>{let{createClientModuleProxy:d}=a.r(89071);a.n(d("[project]/Desktop/advertek-agent-rail/node_modules/.pnpm/next@16.2.11_@babel+core@7.29.7_react-dom@19.2.8_react@19.2.8__react@19.2.8/node_modules/next/dist/client/components/builtin/global-error.js"))},41539,a=>{"use strict";a.i(56675);var b=a.i(48583);a.n(b)},60360,a=>{a.n(a.i(41539))}];
-
-//# sourceMappingURL=1r_d_next_dist_client_components_builtin_global-error_1ai9a62.js.map

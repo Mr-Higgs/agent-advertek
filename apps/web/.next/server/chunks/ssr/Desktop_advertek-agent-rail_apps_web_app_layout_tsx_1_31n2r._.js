@@ -1,3 +1,0 @@
-module.exports=[83877,a=>{"use strict";var b=a.i(59323);a.s(["default",0,function({children:a}){return(0,b.jsx)("html",{lang:"en",children:(0,b.jsx)("body",{children:a})})},"metadata",0,{title:"Advertek Agent Rail",description:"Advertek Agent Rail — the fulfillment rail behind advertekprinting.com. Machine-readable print orders, paid in USDC over Solana."}])},54546,a=>{a.n(a.i(83877))}];
-
-//# sourceMappingURL=Desktop_advertek-agent-rail_apps_web_app_layout_tsx_1_31n2r._.js.map
