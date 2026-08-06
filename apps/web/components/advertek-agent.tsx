@@ -6,6 +6,7 @@ import { RailAccessForm } from "./rail-access-form";
 import { ACCENT, themes, type ThemeMode } from "./theme";
 import { AdvertekMark, CropMark, RegMark } from "./icons";
 import { DeckViewer } from "./deck-viewer";
+import { IntegrationExplorer } from "./integration-explorer";
 
 const payloadLines: readonly string[] = [
   "POST /rail/v1/orders",
@@ -419,12 +420,9 @@ export default function AdvertekAgent() {
             ))}
           </div>
 
-          <p className="text-sm leading-relaxed mt-8 max-w-2xl" style={{ color: t.mid }}>
-            Settlement runs on Solana with QuickNode as RPC infrastructure.
-            OKX handles treasury on/off-ramp. The rail itself is built in
-            Cursor, sitting in front of the same production systems that run
-            advertekprinting.com.
-          </p>
+          <div className="mt-12">
+            <IntegrationExplorer theme={t} />
+          </div>
         </div>
       </section>
 
