@@ -14,6 +14,7 @@ const validSpec: SkuSpec = {
   finish: ["none"],
   quantity: 250,
   turnaround: "expedited",
+  assets: [{ url: "https://assets.example.com/order-1/file.pdf" }],
 };
 
 describe("convertCadCentsToUsdcBaseUnits", () => {

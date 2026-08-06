@@ -1,5 +1,6 @@
 import { PRODUCT_LINE_TO_PRINT_PROCESS } from "@advertek/catalog";
 import {
+  assetTypeSchema,
   finishSchema,
   productLineSchema,
   turnaroundSchema,
@@ -176,6 +177,14 @@ export function buildCatalogToolResult(): CatalogToolResult {
         type: "enum",
         description: "Requested production speed.",
         allowedValues: [...turnaroundSchema.options],
+      },
+      {
+        name: "assets",
+        required: true,
+        type: "array",
+        description:
+          "One or more print-ready files for the job, each with a URL and optional sha256/md5 checksum. Multi-asset products (e.g. book manufacturing) require a `type` on each asset; single-asset products can supply one untyped entry.",
+        allowedValues: [...assetTypeSchema.options],
       },
     ],
     productLines: productLineSchema.options.map((id) => {

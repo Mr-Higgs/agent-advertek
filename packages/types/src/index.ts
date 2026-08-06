@@ -7,17 +7,23 @@ export type PrintProcess =
   | "direct-mail";
 
 export {
+  assetTypeSchema,
   dimensionsSchema,
   finishSchema,
   productLineSchema,
+  skuAssetSchema,
+  skuAssetsSchema,
   skuSpecSchema,
   stockSchema,
   turnaroundSchema,
 } from "./sku-spec.js";
 export type {
+  AssetType,
   Dimensions,
   Finish,
   ProductLine,
+  SkuAsset,
+  SkuAssets,
   SkuSpec,
   Stock,
   Turnaround,

@@ -40,6 +40,25 @@ importers:
         specifier: ^3.2.4
         version: 3.2.7(@types/node@24.13.3)
 
+  packages/fulfillment:
+    dependencies:
+      '@advertek/payments':
+        specifier: workspace:*
+        version: link:../payments
+      '@advertek/types':
+        specifier: workspace:*
+        version: link:../types
+      '@advertek/webhooks':
+        specifier: workspace:*
+        version: link:../webhooks
+      zod:
+        specifier: ^3.25.76
+        version: 3.25.76
+    devDependencies:
+      vitest:
+        specifier: ^3.2.4
+        version: 3.2.7(@types/node@24.13.3)
+
   packages/mcp-server:
     dependencies:
       '@advertek/catalog':

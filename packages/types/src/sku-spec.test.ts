@@ -14,6 +14,7 @@ const validSpec: SkuSpec = {
   finish: ["matte"],
   quantity: 500,
   turnaround: "standard",
+  assets: [{ url: "https://assets.example.com/jobs/order-1/print-ready.pdf" }],
 };
 
 function withOverrides(overrides: Record<string, unknown>): unknown {
@@ -82,6 +83,38 @@ describe("skuSpecSchema", () => {
           skuSpecSchema.parse(withOverrides({ turnaround })).turnaround,
         ).toBe(turnaround);
       }
+    });
+
+    it("accepts a single untyped asset (common one-file-per-item case)", () => {
+      const spec = withOverrides({
+        assets: [{ url: "https://assets.example.com/order-2/file.pdf" }],
+      });
+      expect(skuSpecSchema.parse(spec)).toEqual(spec);
+    });
+
+    it("accepts multiple typed assets for multi-asset products", () => {
+      const spec = withOverrides({
+        assets: [
+          { type: "cover", url: "https://assets.example.com/order-3/cover.pdf" },
+          { type: "page", url: "https://assets.example.com/order-3/pages.pdf" },
+          { type: "brand", url: "https://assets.example.com/order-3/brand.pdf" },
+          { type: "insert", url: "https://assets.example.com/order-3/insert.pdf" },
+        ],
+      });
+      expect(skuSpecSchema.parse(spec)).toEqual(spec);
+    });
+
+    it("accepts optional sha256/md5 verification fields", () => {
+      const spec = withOverrides({
+        assets: [
+          {
+            url: "https://assets.example.com/order-4/file.pdf",
+            sha256: "a".repeat(64),
+            md5: "b".repeat(32),
+          },
+        ],
+      });
+      expect(skuSpecSchema.parse(spec)).toEqual(spec);
     });
   });
 
@@ -171,6 +204,33 @@ describe("skuSpecSchema", () => {
       expect(() =>
         skuSpecSchema.parse(withOverrides({ quantity })),
       ).toThrow();
+    });
+  });
+
+  describe("invalid assets", () => {
+    it.each([
+      ["missing", undefined],
+      ["null", null],
+      ["empty array", []],
+      ["string instead of array", "https://assets.example.com/file.pdf"],
+      ["object instead of array", { url: "https://assets.example.com/file.pdf" }],
+      ["asset missing url", [{}]],
+      ["asset with non-URL string", [{ url: "not-a-url" }]],
+      ["asset with unknown type", [{ url: "https://assets.example.com/file.pdf", type: "watermark" }]],
+      [
+        "asset with malformed sha256 (wrong length)",
+        [{ url: "https://assets.example.com/file.pdf", sha256: "abc123" }],
+      ],
+      [
+        "asset with non-hex sha256",
+        [{ url: "https://assets.example.com/file.pdf", sha256: "z".repeat(64) }],
+      ],
+      [
+        "asset with malformed md5",
+        [{ url: "https://assets.example.com/file.pdf", md5: "not-hex" }],
+      ],
+    ])("rejects %s", (_label, assets) => {
+      expect(() => skuSpecSchema.parse(withOverrides({ assets }))).toThrow();
     });
   });
 

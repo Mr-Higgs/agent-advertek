@@ -14,6 +14,7 @@ const baseSpec: SkuSpec = {
   finish: ["matte"],
   quantity: 500,
   turnaround: "standard",
+  assets: [{ url: "https://assets.example.com/order-1/file.pdf" }],
 };
 
 describe("product-line-map", () => {

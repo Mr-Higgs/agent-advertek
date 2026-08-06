@@ -18,6 +18,7 @@ const validSpec: SkuSpec = {
   finish: ["matte", "spotUv"],
   quantity: 1000,
   turnaround: "rush",
+  assets: [{ url: "https://assets.example.com/order-1/artwork.pdf" }],
 };
 
 describe("get_catalog payload", () => {
