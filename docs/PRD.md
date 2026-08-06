@@ -1,4 +1,4 @@
-# PRD — Advertek Agent Rail
+# PRD — Advertek Agent Rail (Baseline: Solana + OKX)
 
 Status: in development (execution playbook steps 1–11 in flight)
 Version: 0.2 (incorporates rail-agnostic settlement direction + OKX AI)
