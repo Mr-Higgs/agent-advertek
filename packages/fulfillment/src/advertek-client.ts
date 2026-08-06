@@ -61,6 +61,8 @@ export function createAdvertekFulfillmentClient(
   options: CreateAdvertekFulfillmentClientOptions = {},
 ): AdvertekFulfillmentClient {
   const fetchImpl: AdvertekFetchLike = options.fetchImpl ?? fetch;
+  // `undefined` only for a loopback `baseUrl` used in local testing — see
+  // `buildBasicAuthHeader`/`loadFulfillmentConfig` in `config.ts`.
   const authorization = buildBasicAuthHeader(config);
 
   async function request(
@@ -71,7 +73,7 @@ export function createAdvertekFulfillmentClient(
     const response = await fetchImpl(`${config.baseUrl}${path}`, {
       method,
       headers: {
-        Authorization: authorization,
+        ...(authorization !== undefined ? { Authorization: authorization } : {}),
         Accept: "application/json",
         ...(body !== undefined ? { "Content-Type": "application/json" } : {}),
       },

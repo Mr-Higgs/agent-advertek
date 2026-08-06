@@ -132,7 +132,7 @@ describe("createAdvertekFulfillmentClient", () => {
       const calls: string[] = [];
       const fetchImpl = fakeFetch((url) => {
         calls.push(url);
-        return { status: 200, json: { id: "adv order/1", status: "accepted" } };
+        return { status: 200, json: { id: "adv order/1", status: "printing" } };
       });
 
       const client = createAdvertekFulfillmentClient(config, { fetchImpl });

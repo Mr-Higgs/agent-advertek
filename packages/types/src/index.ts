@@ -56,13 +56,27 @@ export interface Quote {
   readonly expiresAt: Date;
 }
 
+/**
+ * Agent-facing order lifecycle status. `downloaded` / `printing` / `printed`
+ * are deliberately kept as distinct stages (not collapsed into a single
+ * "in-production" bucket) because Advertek's fulfillment webhook actually
+ * distinguishes them — see `@advertek/fulfillment`'s `status-bridge.ts`.
+ * `held` and `failed` are likewise their own statuses rather than being
+ * folded into `cancelled`: a held or failed order is not the same outcome
+ * as a deliberate cancellation, and agents need to be able to tell them
+ * apart.
+ */
 export type OrderStatus =
   | "pending-payment"
   | "paid"
-  | "in-production"
+  | "downloaded"
+  | "printing"
+  | "printed"
   | "shipped"
   | "completed"
-  | "cancelled";
+  | "held"
+  | "cancelled"
+  | "failed";
 
 export interface OrderStatusEvent {
   readonly orderId: string;

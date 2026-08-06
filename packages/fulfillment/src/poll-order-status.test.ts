@@ -23,7 +23,7 @@ describe("pollAdvertekOrderStatus", () => {
 
   it("uses the current time by default", async () => {
     const client = {
-      getOrderStatus: () => Promise.resolve({ id: "adv-order-1", status: "accepted" as const }),
+      getOrderStatus: () => Promise.resolve({ id: "adv-order-1", status: "printing" as const }),
     };
 
     const before = Date.now();

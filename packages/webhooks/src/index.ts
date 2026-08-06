@@ -6,10 +6,14 @@ export const orderStatusWebhookSchema = z.object({
   status: z.enum([
     "pending-payment",
     "paid",
-    "in-production",
+    "downloaded",
+    "printing",
+    "printed",
     "shipped",
     "completed",
+    "held",
     "cancelled",
+    "failed",
   ]),
   occurredAt: z.coerce.date(),
 }) satisfies z.ZodType<OrderStatusEvent>;

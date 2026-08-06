@@ -138,15 +138,23 @@ export type AdvertekCreateOrderResponse = z.infer<
 >;
 
 /**
- * Advertek's full raw status vocabulary. Deliberately NOT mapped to our own
- * four-stage `OrderStatus` here — see `status-bridge.ts` for why, and for
- * the TODO covering the missing middle states.
+ * Advertek's real raw status vocabulary, shared by both the
+ * `GET /api/v1/orders/{id}` poll response and inbound webhook deliveries
+ * (see `advertek-webhook.ts`). This replaces an earlier assumed set
+ * (`accepted` / `shipped` / `cancelled` / `cancelled_after_printing`) that
+ * was guessed before Advertek's actual webhook contract was available —
+ * see `status-bridge.ts` for how each of these maps onto our own
+ * agent-facing `OrderStatus`.
  */
 export const advertekOrderStatusSchema = z.enum([
-  "accepted",
+  "downloaded",
+  "printing",
+  "printed",
   "shipped",
+  "delivered",
+  "held",
   "cancelled",
-  "cancelled_after_printing",
+  "failed",
 ]);
 export type AdvertekOrderStatus = z.infer<typeof advertekOrderStatusSchema>;
 
@@ -186,3 +194,31 @@ export const advertekOrderMutationResponseSchema = z
 export type AdvertekOrderMutationResponse = z.infer<
   typeof advertekOrderMutationResponseSchema
 >;
+
+/** One shipment package as reported on an inbound status webhook delivery. */
+export const advertekWebhookPackageSchema = z.object({
+  id: z.string().min(1),
+  tracking_name: z.string().min(1),
+  aftership_slug: z.string().min(1),
+  tracking_code: z.string().min(1),
+  tracking_url: z.string().url(),
+});
+export type AdvertekWebhookPackage = z.infer<typeof advertekWebhookPackageSchema>;
+
+/**
+ * Inbound order-status webhook payload. `metadata` is the exact same map we
+ * stamped onto the order at creation time (see `request-builder.ts`) — it's
+ * our only correlation key back to the internal order id, via
+ * `metadata.internal_order_id`. `packages` defaults to an empty array since
+ * early-lifecycle statuses (e.g. `downloaded`, `printing`) won't have
+ * shipment tracking info yet.
+ */
+export const advertekWebhookPayloadSchema = z
+  .object({
+    id: z.string().min(1),
+    status: advertekOrderStatusSchema,
+    metadata: advertekMetadataSchema,
+    packages: z.array(advertekWebhookPackageSchema).default([]),
+  })
+  .passthrough();
+export type AdvertekWebhookPayload = z.infer<typeof advertekWebhookPayloadSchema>;

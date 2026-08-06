@@ -2,43 +2,53 @@ import type { OrderStatus } from "@advertek/types";
 import type { AdvertekOrderStatus } from "./advertek-api-types.js";
 
 /**
- * TODO(advertek-status-gap): Advertek's fulfillment API only exposes
- * `accepted` / `shipped` / `cancelled` / `cancelled_after_printing` — there
- * is no `in_production` or `quality_check` status. That means this can only
- * reliably bridge the *ends* of our four-stage `OrderStatus` lifecycle
- * (`pending-payment` -> `paid` -> `in-production` -> `shipped` ->
- * `completed` -> `cancelled`); `accepted` is genuinely ambiguous — it could
- * mean anything from "we just received it" to "about to ship" — and we have
- * no vendor signal for when production actually starts or finishes short of
- * shipping.
+ * Maps Advertek's raw fulfillment status — used by both the
+ * `GET /api/v1/orders/{id}` poll response and inbound webhook deliveries
+ * (see `advertek-webhook.ts`) — onto our own agent-facing `OrderStatus`.
  *
- * Two follow-ups needed before this gap can close for real:
- *   1. Ask Advertek whether they can add a webhook or an additional status
- *      for production-start (and ideally quality-check), so we can emit
- *      `in-production` the moment we actually know it's true instead of
- *      guessing.
- *   2. Failing that, a polling heuristic: e.g. treat `accepted` as
- *      `in-production` once N hours have elapsed since order creation.
- *      This needs a real SLA/turnaround number from Advertek to pick a
- *      defensible N, and isn't implemented here.
+ * This is a total mapping. Advertek's real status vocabulary
+ * (`downloaded` / `printing` / `printed` / `shipped` / `delivered` /
+ * `held` / `cancelled` / `failed`) gives genuine intermediate production
+ * coverage, unlike the `accepted` / `shipped` / `cancelled` /
+ * `cancelled_after_printing` set that was assumed before Advertek's real
+ * webhook contract was available. Two deliberate design decisions follow
+ * from that:
  *
- * Until one of those lands, `bridgeAdvertekStatusToOrderStatus` deliberately
- * returns `undefined` for `accepted` rather than emitting a stage-advancing
- * SLA webhook off of an unreliable guess. Callers (see
- * `status-poll-dispatcher.ts`) must treat `undefined` as "nothing new to
- * report to the agent yet" and keep polling.
+ *   1. `downloaded` / `printing` / `printed` are surfaced as their own
+ *      distinct `OrderStatus` values rather than collapsed into a single
+ *      `in-production` bucket — Advertek actually distinguishes these, so
+ *      agents get real visibility into which sub-stage an order is in
+ *      instead of an opaque "somewhere in production".
+ *   2. `held` and `failed` get their own explicit agent-facing statuses
+ *      rather than being silently dropped or folded into `cancelled` — a
+ *      held or failed order is a materially different outcome from a
+ *      deliberate cancellation, and agents need to be able to tell them
+ *      apart (e.g. to decide whether to escalate vs. simply re-order).
+ *
+ * `delivered` maps to our existing `completed` terminal status (same
+ * concept: the order reached the customer), so no new `OrderStatus` value
+ * was needed for it.
  */
 export function bridgeAdvertekStatusToOrderStatus(
   status: AdvertekOrderStatus,
-): OrderStatus | undefined {
+): OrderStatus {
   switch (status) {
-    case "accepted":
-      return undefined;
+    case "downloaded":
+      return "downloaded";
+    case "printing":
+      return "printing";
+    case "printed":
+      return "printed";
     case "shipped":
       return "shipped";
+    case "delivered":
+      return "completed";
+    case "held":
+      return "held";
     case "cancelled":
-    case "cancelled_after_printing":
       return "cancelled";
+    case "failed":
+      return "failed";
     default: {
       const exhaustiveCheck: never = status;
       throw new Error(`Unhandled Advertek order status: ${String(exhaustiveCheck)}`);

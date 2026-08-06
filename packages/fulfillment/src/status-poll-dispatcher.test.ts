@@ -23,7 +23,11 @@ describe("pollAndDispatchOrderStatus", () => {
       { internalOrderId: "order-1", vendorOrderId: "adv-order-1" },
     );
 
-    expect(result).toEqual({ vendorStatus: "shipped", polledAt, dispatched: true });
+    expect(result).toEqual({
+      vendorStatus: "shipped",
+      orderStatus: "shipped",
+      polledAt,
+    });
     expect(dispatch).toHaveBeenCalledWith(subscription, {
       orderId: "order-1",
       status: "shipped",
@@ -31,25 +35,8 @@ describe("pollAndDispatchOrderStatus", () => {
     });
   });
 
-  it("does not dispatch for the ambiguous 'accepted' status", async () => {
-    const client = {
-      getOrderStatus: () =>
-        Promise.resolve({ id: "adv-order-1", status: "accepted" as const }),
-    };
-    const dispatch = vi.fn((): Promise<void> => Promise.resolve());
-
-    const result = await pollAndDispatchOrderStatus(
-      { client, webhookDispatcher: { dispatch }, subscription },
-      { internalOrderId: "order-1", vendorOrderId: "adv-order-1" },
-    );
-
-    expect(result.dispatched).toBe(false);
-    expect(result.vendorStatus).toBe("accepted");
-    expect(dispatch).not.toHaveBeenCalled();
-  });
-
-  it("dispatches cancelled for both cancelled and cancelled_after_printing", async () => {
-    for (const vendorStatus of ["cancelled", "cancelled_after_printing"] as const) {
+  it("dispatches the granular downloaded/printing/printed stages rather than a generic in-production bucket", async () => {
+    for (const vendorStatus of ["downloaded", "printing", "printed"] as const) {
       const client = {
         getOrderStatus: () => Promise.resolve({ id: "adv-order-1", status: vendorStatus }),
       };
@@ -60,11 +47,67 @@ describe("pollAndDispatchOrderStatus", () => {
         { internalOrderId: "order-1", vendorOrderId: "adv-order-1" },
       );
 
-      expect(result.dispatched).toBe(true);
+      expect(result.orderStatus).toBe(vendorStatus);
       expect(dispatch).toHaveBeenCalledWith(
         subscription,
-        expect.objectContaining({ status: "cancelled" }),
+        expect.objectContaining({ status: vendorStatus }),
       );
     }
+  });
+
+  it("dispatches held and failed as their own explicit statuses, not cancelled", async () => {
+    for (const vendorStatus of ["held", "failed"] as const) {
+      const client = {
+        getOrderStatus: () => Promise.resolve({ id: "adv-order-1", status: vendorStatus }),
+      };
+      const dispatch = vi.fn((): Promise<void> => Promise.resolve());
+
+      const result = await pollAndDispatchOrderStatus(
+        { client, webhookDispatcher: { dispatch }, subscription },
+        { internalOrderId: "order-1", vendorOrderId: "adv-order-1" },
+      );
+
+      expect(result.orderStatus).toBe(vendorStatus);
+      expect(dispatch).toHaveBeenCalledWith(
+        subscription,
+        expect.objectContaining({ status: vendorStatus }),
+      );
+    }
+  });
+
+  it("dispatches completed for the vendor's delivered status", async () => {
+    const client = {
+      getOrderStatus: () => Promise.resolve({ id: "adv-order-1", status: "delivered" as const }),
+    };
+    const dispatch = vi.fn((): Promise<void> => Promise.resolve());
+
+    const result = await pollAndDispatchOrderStatus(
+      { client, webhookDispatcher: { dispatch }, subscription },
+      { internalOrderId: "order-1", vendorOrderId: "adv-order-1" },
+    );
+
+    expect(result.orderStatus).toBe("completed");
+    expect(dispatch).toHaveBeenCalledWith(
+      subscription,
+      expect.objectContaining({ status: "completed" }),
+    );
+  });
+
+  it("dispatches cancelled for the vendor's cancelled status", async () => {
+    const client = {
+      getOrderStatus: () => Promise.resolve({ id: "adv-order-1", status: "cancelled" as const }),
+    };
+    const dispatch = vi.fn((): Promise<void> => Promise.resolve());
+
+    const result = await pollAndDispatchOrderStatus(
+      { client, webhookDispatcher: { dispatch }, subscription },
+      { internalOrderId: "order-1", vendorOrderId: "adv-order-1" },
+    );
+
+    expect(result.orderStatus).toBe("cancelled");
+    expect(dispatch).toHaveBeenCalledWith(
+      subscription,
+      expect.objectContaining({ status: "cancelled" }),
+    );
   });
 });

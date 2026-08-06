@@ -1,3 +1,4 @@
+import type { OrderStatus } from "@advertek/types";
 import type { WebhookDispatcher, WebhookSubscription } from "@advertek/webhooks";
 import type { AdvertekOrderStatus } from "./advertek-api-types.js";
 import type { AdvertekFulfillmentClient } from "./advertek-client.js";
@@ -18,18 +19,16 @@ export interface PollAndDispatchOrderStatusInput {
 
 export interface PollAndDispatchOrderStatusResult {
   readonly vendorStatus: AdvertekOrderStatus;
+  readonly orderStatus: OrderStatus;
   readonly polledAt: Date;
-  /** True only when the raw vendor status mapped to one of our OrderStatus values and was dispatched. */
-  readonly dispatched: boolean;
 }
 
 /**
- * Polls Advertek for an order's current status and, only when the raw
- * vendor status maps to one of our own `OrderStatus` values (see
- * `status-bridge.ts`), dispatches an `OrderStatusEvent` through the
- * `@advertek/webhooks` dispatcher for agent-facing updates. Ambiguous
- * middle states (currently just `accepted`) are polled but intentionally
- * not dispatched — see the TODO in `status-bridge.ts`.
+ * Polls Advertek for an order's current status and dispatches an
+ * `OrderStatusEvent` through the `@advertek/webhooks` dispatcher for
+ * agent-facing updates. `bridgeAdvertekStatusToOrderStatus` is a total
+ * mapping (see `status-bridge.ts`), so every raw vendor status — including
+ * `held` and `failed` — always produces a dispatchable `OrderStatus`.
  */
 export async function pollAndDispatchOrderStatus(
   deps: PollAndDispatchOrderStatusDeps,
@@ -40,16 +39,13 @@ export async function pollAndDispatchOrderStatus(
     input.vendorOrderId,
   );
 
-  const mappedStatus = bridgeAdvertekStatusToOrderStatus(polled.status);
-  if (mappedStatus === undefined) {
-    return { vendorStatus: polled.status, polledAt: polled.polledAt, dispatched: false };
-  }
+  const orderStatus = bridgeAdvertekStatusToOrderStatus(polled.status);
 
   await deps.webhookDispatcher.dispatch(deps.subscription, {
     orderId: input.internalOrderId,
-    status: mappedStatus,
+    status: orderStatus,
     occurredAt: polled.polledAt,
   });
 
-  return { vendorStatus: polled.status, polledAt: polled.polledAt, dispatched: true };
+  return { vendorStatus: polled.status, orderStatus, polledAt: polled.polledAt };
 }

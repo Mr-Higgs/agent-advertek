@@ -1,4 +1,8 @@
-import { PRODUCT_LINE_TO_PRINT_PROCESS } from "@advertek/catalog";
+import { PRODUCT_LINE_TO_PRINT_PROCESS, POD_PRICE_LIST } from "@advertek/catalog";
+import {
+  convertCadCentsToUsdcBaseUnits,
+  type SpotRateClient,
+} from "@advertek/quote-api";
 import {
   assetTypeSchema,
   finishSchema,
@@ -85,6 +89,20 @@ export const productLineInfoSchema = z.object({
   advertekPrintProcess: z.string(),
 });
 
+export const skuCatalogEntrySchema = z.object({
+  sku: z.string(),
+  name: z.string(),
+  category: z.string(),
+  priceCad: z.object({
+    currency: z.literal("CAD"),
+    amountCents: z.string(),
+  }),
+  estimatedPriceUsdc: z.object({
+    currency: z.literal("USDC"),
+    amountBaseUnits: z.string(),
+  }),
+});
+
 export const catalogToolResultSchema = z.object({
   provider: z.literal("Advertek"),
   service: z.literal("Advertek Agent Rail"),
@@ -96,11 +114,31 @@ export const catalogToolResultSchema = z.object({
   }),
   specRequirements: z.array(fieldRequirementSchema),
   productLines: z.array(productLineInfoSchema),
+  skuCatalogNote: z.string(),
+  skuCatalog: z.array(skuCatalogEntrySchema),
 });
 
 export type CatalogToolResult = z.infer<typeof catalogToolResultSchema>;
 
-export function buildCatalogToolResult(): CatalogToolResult {
+export interface BuildCatalogToolResultDeps {
+  /**
+   * Used only to annotate skuCatalog with a live, non-binding USDC estimate
+   * so agents can see approximate settlement cost while browsing without a
+   * round trip per SKU. Always call get_sku_quote / get_quote to lock in
+   * the exact amount before paying — spot rates move between browse and
+   * checkout.
+   *
+   * @blocker STEP_11 — Stub only, see @advertek/quote-api's SpotRateClient.
+   */
+  readonly spotRateClient: SpotRateClient;
+}
+
+export async function buildCatalogToolResult(
+  deps: BuildCatalogToolResultDeps,
+): Promise<CatalogToolResult> {
+  const usdcBaseUnitsPerCadDollar =
+    await deps.spotRateClient.getUsdcBaseUnitsPerCadDollar();
+
   return {
     provider: "Advertek",
     service: "Advertek Agent Rail",
@@ -196,5 +234,20 @@ export function buildCatalogToolResult(): CatalogToolResult {
         advertekPrintProcess: PRODUCT_LINE_TO_PRINT_PROCESS[id],
       };
     }),
+    skuCatalogNote:
+      "Beta shortcut: these are fixed-price print-on-demand products with a raw SKU code you can pass straight to get_sku_quote (sku + quantity) — skip building a full SKU specification for these. priceCad is the per-unit MSRP in CAD cents. estimatedPriceUsdc is a live-rate estimate for browsing, not a locked quote — call get_sku_quote right before ordering to get the exact USDC amount to pay.",
+    skuCatalog: POD_PRICE_LIST.map((entry) => ({
+      sku: entry.sku,
+      name: entry.name,
+      category: entry.category,
+      priceCad: { currency: "CAD" as const, amountCents: entry.msrpCadCents.toString() },
+      estimatedPriceUsdc: {
+        currency: "USDC" as const,
+        amountBaseUnits: convertCadCentsToUsdcBaseUnits(
+          entry.msrpCadCents,
+          usdcBaseUnitsPerCadDollar,
+        ).toString(),
+      },
+    })),
   };
 }

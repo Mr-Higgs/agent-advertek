@@ -4,6 +4,8 @@ import {
   advertekCreateOrderRequestSchema,
   advertekOrderDetailResponseSchema,
   advertekOrderItemSchema,
+  advertekOrderStatusSchema,
+  advertekWebhookPayloadSchema,
   type AdvertekCreateOrderRequest,
 } from "./advertek-api-types.js";
 
@@ -186,6 +188,78 @@ describe("advertekOrderDetailResponseSchema", () => {
   it("rejects an unrecognized status value", () => {
     expect(() =>
       advertekOrderDetailResponseSchema.parse({ id: "adv-order-1", status: "in_production" }),
+    ).toThrow();
+  });
+});
+
+describe("advertekOrderStatusSchema", () => {
+  it("accepts every value in Advertek's real status vocabulary", () => {
+    const realStatuses = [
+      "downloaded",
+      "printing",
+      "printed",
+      "shipped",
+      "delivered",
+      "held",
+      "cancelled",
+      "failed",
+    ] as const;
+
+    for (const status of realStatuses) {
+      expect(() => advertekOrderStatusSchema.parse(status)).not.toThrow();
+    }
+  });
+
+  it("rejects the earlier assumed status set now that the real vocabulary is known", () => {
+    for (const status of ["accepted", "cancelled_after_printing"]) {
+      expect(() => advertekOrderStatusSchema.parse(status)).toThrow();
+    }
+  });
+});
+
+describe("advertekWebhookPayloadSchema", () => {
+  const validPackage = {
+    id: "pkg-1",
+    tracking_name: "Box 1 of 1",
+    aftership_slug: "ups",
+    tracking_code: "1Z999AA10123456784",
+    tracking_url: "https://track.aftership.com/ups/1Z999AA10123456784",
+  };
+
+  const stagingShapedPayload = {
+    id: "adv-order-9001",
+    status: "shipped",
+    metadata: { internal_order_id: "order-123", internal_item_id: "item-1" },
+    packages: [validPackage],
+  };
+
+  it("accepts a staging-shaped payload with a real status and populated packages", () => {
+    const parsed = advertekWebhookPayloadSchema.parse(stagingShapedPayload);
+    expect(parsed).toMatchObject(stagingShapedPayload);
+  });
+
+  it("defaults packages to an empty array for early-lifecycle statuses that omit it", () => {
+    const parsed = advertekWebhookPayloadSchema.parse({
+      id: "adv-order-9002",
+      status: "downloaded",
+      metadata: { internal_order_id: "order-124" },
+    });
+    expect(parsed.packages).toEqual([]);
+  });
+
+  it("rejects a package missing a required tracking field", () => {
+    const packageWithoutUrl = { ...validPackage, tracking_url: undefined };
+    expect(() =>
+      advertekWebhookPayloadSchema.parse({
+        ...stagingShapedPayload,
+        packages: [packageWithoutUrl],
+      }),
+    ).toThrow();
+  });
+
+  it("rejects the earlier assumed status set", () => {
+    expect(() =>
+      advertekWebhookPayloadSchema.parse({ ...stagingShapedPayload, status: "accepted" }),
     ).toThrow();
   });
 });

@@ -5,6 +5,7 @@ export {
 export {
   buildCatalogToolResult,
   catalogToolResultSchema,
+  type BuildCatalogToolResultDeps,
   type CatalogToolResult,
 } from "./catalog-tool.js";
 export {
@@ -14,3 +15,10 @@ export {
   type QuoteExecutor,
   type QuoteToolResult,
 } from "./quote-tool.js";
+export {
+  buildSkuQuoteToolResult,
+  skuQuoteToolInputSchema,
+  skuQuoteToolResultSchema,
+  type SkuQuoteExecutor,
+  type SkuQuoteToolResult,
+} from "./sku-quote-tool.js";

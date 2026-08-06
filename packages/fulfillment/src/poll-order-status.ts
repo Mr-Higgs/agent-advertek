@@ -15,9 +15,10 @@ export interface PollOrderStatusDeps {
 
 /**
  * Polls Advertek for an order's current status and stamps the poll time.
- * Deliberately returns the raw vendor status (`accepted` / `shipped` /
- * `cancelled` / `cancelled_after_printing`) rather than inventing a mapping
- * to our own `OrderStatus` — see `status-bridge.ts`.
+ * Deliberately returns the raw vendor status (`downloaded` / `printing` /
+ * `printed` / `shipped` / `delivered` / `held` / `cancelled` / `failed`)
+ * rather than inventing a mapping to our own `OrderStatus` — see
+ * `status-bridge.ts`.
  */
 export async function pollAdvertekOrderStatus(
   deps: PollOrderStatusDeps,

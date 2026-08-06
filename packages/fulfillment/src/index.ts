@@ -1,6 +1,9 @@
 export {
+  ADVERTEK_STAGING_BASE_URL,
   buildBasicAuthHeader,
+  loadAdvertekWebhookConfig,
   loadFulfillmentConfig,
+  type AdvertekWebhookConfig,
   type FulfillmentConfig,
 } from "./config.js";
 
@@ -18,6 +21,8 @@ export {
   advertekOrderMutationResponseSchema,
   advertekOrderStatusSchema,
   advertekUpdateShippingRequestSchema,
+  advertekWebhookPackageSchema,
+  advertekWebhookPayloadSchema,
   type AdvertekAddress,
   type AdvertekAsset,
   type AdvertekAssetType,
@@ -31,6 +36,8 @@ export {
   type AdvertekOrderMutationResponse,
   type AdvertekOrderStatus,
   type AdvertekUpdateShippingRequest,
+  type AdvertekWebhookPackage,
+  type AdvertekWebhookPayload,
 } from "./advertek-api-types.js";
 
 export {
@@ -78,3 +85,25 @@ export {
   type PollAndDispatchOrderStatusInput,
   type PollAndDispatchOrderStatusResult,
 } from "./status-poll-dispatcher.js";
+
+export {
+  AdvertekWebhookAuthError,
+  AdvertekWebhookPayloadValidationError,
+  handleAdvertekWebhook,
+  verifyAdvertekWebhookBasicAuth,
+  type AdvertekWebhookCredentials,
+  type AdvertekWebhookEvent,
+  type AdvertekWebhookRequest,
+  type HandleAdvertekWebhookDeps,
+} from "./advertek-webhook.js";
+
+export {
+  createAdvertekWebhookRequestHandler,
+  type AdvertekWebhookRequestListener,
+} from "./advertek-webhook-http.js";
+
+export {
+  dispatchAdvertekWebhookEvent,
+  type DispatchAdvertekWebhookEventDeps,
+  type WebhookSubscriptionLookup,
+} from "./webhook-dispatch.js";
