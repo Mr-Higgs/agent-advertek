@@ -207,6 +207,7 @@ export default function AdvertekAgent() {
                 <a href="#capabilities" className="nav-link" style={{ opacity: 0.9 }}>Capabilities</a>
                 <a href="#integration" className="nav-link" style={{ opacity: 0.9 }}>API</a>
                 <a href="#deck" className="nav-link" style={{ opacity: 0.9 }}>Deck</a>
+                <a href="/whitepaper" className="nav-link" style={{ opacity: 0.9 }}>Whitepaper</a>
                 <a href="#contact" className="nav-link" style={{ opacity: 0.9 }}>Contact</a>
               </nav>
 
@@ -506,6 +507,16 @@ export default function AdvertekAgent() {
           <div className="max-w-6xl mx-auto px-6 py-24">
             <SectionHeading eyebrow="The pitch" title="Ten slides, if you want the whole story" theme={t} />
             <DeckViewer theme={t} />
+            <p className="mt-8 text-sm" style={{ color: t.mid }}>
+              Prefer prose?{" "}
+              <a
+                href="/whitepaper"
+                className="font-mono text-xs tracking-widest uppercase underline"
+                style={{ color: ACCENT, textUnderlineOffset: "3px" }}
+              >
+                Read the whitepaper
+              </a>
+            </p>
           </div>
         </section>
 
