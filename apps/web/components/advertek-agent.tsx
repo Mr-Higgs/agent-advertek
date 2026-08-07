@@ -1,36 +1,38 @@
 "use client";
 
-import { Fragment, useEffect, useState } from "react";
+import { Fragment, useEffect, useState, type CSSProperties, type ReactNode } from "react";
 import { Moon, Sun } from "lucide-react";
 import { RailAccessForm } from "./rail-access-form";
-import { ACCENT, themes, type ThemeMode } from "./theme";
-import { AdvertekMark, CropMark, RegMark } from "./icons";
+import { ACCENT, SOLANA_GRAD, themes, type Theme, type ThemeMode } from "./theme";
+import { AdvertekMark, RegMark } from "./icons";
 import { DeckViewer } from "./deck-viewer";
 import { IntegrationExplorer } from "./integration-explorer";
 
 const payloadLines: readonly string[] = [
-  "POST /rail/v1/orders",
+  "POST /api/quotes",
   "{",
-  '  "agent": "proc-0x8f2a41",',
-  '  "product": "wide_format.banner",',
-  '  "spec": {',
+  '  "skuId": "wide_format.banner",',
+  '  "quantity": 40,',
+  '  "specification": {',
   '    "size": "24x36in",',
   '    "substrate": "13oz_matte_vinyl",',
-  '    "qty": 40',
-  "  },",
-  '  "settlement": {',
-  '    "rail": "solana",',
-  '    "asset": "usdc",',
-  '    "status": "confirmed"',
-  "  },",
-  '  "dispatch": "2026-08-08"',
+  '    "turnaround": "standard"',
+  "  }",
   "}",
+];
+
+const responseLines: readonly string[] = [
+  '{ "total": { "currency": "USDC",',
+  '            "amountBaseUnits": "91250000" },',
+  '  "settlement": { "rail": "solana",',
+  '                  "status": "confirmed" } }',
 ];
 
 interface PipelineStep {
   readonly n: string;
   readonly t: string;
   readonly d: string;
+  readonly onChain?: boolean;
 }
 
 const pipeline: readonly PipelineStep[] = [
@@ -42,7 +44,8 @@ const pipeline: readonly PipelineStep[] = [
   {
     n: "02",
     t: "Settle",
-    d: "Payment confirms on Solana via QuickNode RPC before the job enters the production queue.",
+    d: "Payment confirms in USDC on Solana via QuickNode RPC before the job enters the production queue.",
+    onChain: true,
   },
   {
     n: "03",
@@ -74,28 +77,54 @@ const capabilities: ReadonlyArray<readonly [string, string]> = [
 interface StackItem {
   readonly role: string;
   readonly detail: string;
+  readonly onChain?: boolean;
 }
 
 const stack: readonly StackItem[] = [
   { role: "Agent", detail: "Machine-readable request" },
   { role: "Advertek Agent Rail", detail: "Order + spec routing" },
-  { role: "Solana / QuickNode", detail: "Settlement + RPC" },
+  { role: "Solana / QuickNode", detail: "USDC settlement + RPC", onChain: true },
   { role: "OKX", detail: "Treasury on/off-ramp" },
   { role: "Production floor", detail: "North York, ON" },
 ];
 
-const stats: ReadonlyArray<readonly [string, string]> = [
-  ["12", "Product lines on the rail"],
-  ["1", "Settlement rail — Solana"],
-  ["North York, ON", "Production floor"],
-  ["Agent-native", "Order interface"],
+const stats: ReadonlyArray<readonly [string, string, boolean]> = [
+  ["12", "Product lines on the rail", false],
+  ["USDC", "Settled on Solana", true],
+  ["North York, ON", "Production floor", false],
+  ["Agent-native", "Order interface", false],
 ];
+
+const heroChips: readonly string[] = ["USDC on Solana", "MCP-native", "No PO cycles"];
+
+interface SectionHeadingProps {
+  readonly eyebrow: string;
+  readonly title: ReactNode;
+  readonly theme: Theme;
+}
+
+function SectionHeading({ eyebrow, title, theme: t }: SectionHeadingProps) {
+  return (
+    <>
+      <div className="font-mono text-xs tracking-widest uppercase mb-3" style={{ color: ACCENT }}>
+        {eyebrow}
+      </div>
+      <h2
+        className="font-display uppercase mb-12"
+        style={{ fontWeight: 700, fontSize: "clamp(1.6rem, 3.4vw, 2.25rem)", color: t.text, letterSpacing: "-0.01em" }}
+      >
+        {title}
+      </h2>
+    </>
+  );
+}
 
 export default function AdvertekAgent() {
   const [mounted, setMounted] = useState(false);
   const [mode, setMode] = useState<ThemeMode>("dark");
   const [isFormOpen, setIsFormOpen] = useState(false);
   const t = themes[mode];
+  const isDark = mode === "dark";
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -106,372 +135,422 @@ export default function AdvertekAgent() {
     };
   }, []);
 
+  const rootStyle: CSSProperties = {
+    backgroundColor: t.bg,
+    color: t.text,
+    fontFamily: "var(--font-sans), 'IBM Plex Sans', sans-serif",
+    transition: "background-color 0.25s ease, color 0.25s ease",
+    "--accent": ACCENT,
+    "--solana-grad": SOLANA_GRAD,
+    "--grid-line": t.line,
+    "--pulse-color": "rgba(20,241,149,0.45)",
+  } as CSSProperties;
+
+  // Border-less base so callers can apply either the `border` shorthand or
+  // per-side longhands without mixing the two in one style object (which
+  // triggers React's "updating a style property during rerender" warning).
+  const glassBase: CSSProperties = {
+    backgroundColor: t.cardBg,
+    backdropFilter: "blur(6px)",
+    WebkitBackdropFilter: "blur(6px)",
+  };
+  const glassCard: CSSProperties = {
+    ...glassBase,
+    border: `1px solid ${t.cardBorder}`,
+  };
+
   return (
-    <div
-      style={{
-        backgroundColor: t.bg,
-        color: t.text,
-        fontFamily: "'IBM Plex Sans', sans-serif",
-        transition: "background-color 0.25s ease, color 0.25s ease",
-      }}
-      className="w-full min-h-screen"
-    >
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@500;700;900&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
+    <div className="relative w-full min-h-screen" style={rootStyle}>
+      {/* Ambient background: masked grid + accent glows */}
+      <div aria-hidden className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
+        <div className="grid-bg absolute inset-0" style={{ opacity: isDark ? 0.5 : 0.35 }} />
+        <div
+          className="hero-glow absolute"
+          style={{ width: 560, height: 560, top: -220, left: "12%", background: t.glow }}
+        />
+        <div
+          className="hero-glow absolute"
+          style={{ width: 460, height: 460, top: 60, right: "-4%", background: "rgba(153,69,255,0.16)" }}
+        />
+      </div>
 
-        .font-display { font-family: 'Big Shoulders Display', sans-serif; }
-        .font-mono { font-family: 'IBM Plex Mono', monospace; }
+      <div className="relative z-10">
+        {/* NAV */}
+        <header
+          className="sticky top-0 z-30 w-full"
+          style={{
+            backgroundColor: isDark ? "rgba(6,9,16,0.72)" : "rgba(255,255,255,0.72)",
+            backdropFilter: "blur(12px)",
+            WebkitBackdropFilter: "blur(12px)",
+            borderBottom: `1px solid ${t.line}`,
+          }}
+        >
+          <div className="max-w-6xl mx-auto px-6 py-5 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <AdvertekMark size={26} />
+              <div>
+                <span className="font-mono text-sm tracking-widest uppercase block" style={{ color: t.text }}>
+                  Advertek Agent
+                </span>
+                <span className="font-mono block" style={{ color: ACCENT, fontSize: "0.55rem", letterSpacing: "0.2em" }}>
+                  Going Beyond Ink
+                </span>
+              </div>
+            </div>
 
-        .stamp-in {
-          opacity: 0;
-          transform: translateY(10px) scale(0.98);
-          transition: opacity 0.5s ease, transform 0.5s ease;
-        }
-        .stamp-in.mounted {
-          opacity: 1;
-          transform: translateY(0) scale(1);
-        }
-
-        .payload-line {
-          opacity: 0;
-          transform: translateX(-4px);
-          transition: opacity 0.35s ease, transform 0.35s ease;
-        }
-        .payload-line.mounted {
-          opacity: 1;
-          transform: translateX(0);
-        }
-
-        a, button {
-          transition: opacity 0.15s ease, border-color 0.15s ease, background-color 0.15s ease, color 0.15s ease;
-        }
-        a:focus-visible, button:focus-visible {
-          outline: 1px solid currentColor;
-          outline-offset: 3px;
-        }
-        .nav-link { position: relative; }
-        .nav-link::after {
-          content: "";
-          position: absolute;
-          left: 0;
-          right: 0;
-          bottom: -6px;
-          height: 2px;
-          background: ${ACCENT};
-          transform: scaleX(0);
-          transform-origin: left;
-          transition: transform 0.2s ease;
-        }
-        .nav-link:hover::after, .nav-link:focus-visible::after { transform: scaleX(1); }
-
-        @media (prefers-reduced-motion: reduce) {
-          .stamp-in, .payload-line {
-            transition: none !important;
-            opacity: 1 !important;
-            transform: none !important;
-          }
-        }
-      `}</style>
-
-      {/* NAV */}
-      <header
-        className="sticky top-0 z-20 w-full"
-        style={{ backgroundColor: t.bg, borderBottom: `1px solid ${t.line}` }}
-      >
-        <div className="max-w-6xl mx-auto px-6 py-5 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <AdvertekMark size={26} />
-            <div>
-              <span className="font-mono text-sm tracking-widest uppercase block" style={{ color: t.text }}>
-                Advertek Agent
-              </span>
-              <span
-                className="font-mono block"
-                style={{ color: ACCENT, fontSize: "0.55rem", letterSpacing: "0.2em" }}
+            <div className="flex items-center gap-8">
+              <nav
+                className="hidden md:flex items-center gap-8 font-mono text-xs tracking-widest uppercase"
+                style={{ color: t.mid }}
               >
-                Going Beyond Ink
-              </span>
+                <a href="#rail" className="nav-link" style={{ opacity: 0.9 }}>Rail</a>
+                <a href="#capabilities" className="nav-link" style={{ opacity: 0.9 }}>Capabilities</a>
+                <a href="#integration" className="nav-link" style={{ opacity: 0.9 }}>API</a>
+                <a href="#deck" className="nav-link" style={{ opacity: 0.9 }}>Deck</a>
+                <a href="#contact" className="nav-link" style={{ opacity: 0.9 }}>Contact</a>
+              </nav>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setMode(isDark ? "light" : "dark");
+                }}
+                aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
+                className="flex items-center justify-center w-9 h-9 rounded-md"
+                style={{ border: `1px solid ${t.cardBorder}`, backgroundColor: t.cardBg, color: t.text }}
+              >
+                {isDark ? <Sun size={14} /> : <Moon size={14} />}
+              </button>
             </div>
           </div>
+        </header>
 
-          <div className="flex items-center gap-8">
-            <nav
-              className="hidden md:flex items-center gap-8 font-mono text-xs tracking-widest uppercase"
-              style={{ color: t.mid }}
-            >
-              <a href="#rail" className="nav-link" style={{ opacity: 0.9 }}>Rail</a>
-              <a href="#capabilities" className="nav-link" style={{ opacity: 0.9 }}>Capabilities</a>
-              <a href="#integration" className="nav-link" style={{ opacity: 0.9 }}>Integration</a>
-              <a href="#deck" className="nav-link" style={{ opacity: 0.9 }}>Deck</a>
-              <a href="#contact" className="nav-link" style={{ opacity: 0.9 }}>Contact</a>
-            </nav>
-
-            <button
-              type="button"
-              onClick={() => {
-                setMode(mode === "dark" ? "light" : "dark");
-              }}
-              aria-label={mode === "dark" ? "Switch to light mode" : "Switch to dark mode"}
-              className="flex items-center justify-center w-8 h-8"
-              style={{ border: `1px solid ${t.line}`, color: t.text }}
-            >
-              {mode === "dark" ? <Sun size={14} /> : <Moon size={14} />}
-            </button>
-          </div>
-        </div>
-      </header>
-
-      {/* HERO */}
-      <section id="rail" className="max-w-6xl mx-auto px-6 pt-16 pb-20">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-14 items-start">
-          {/* Left: copy */}
-          <div>
-            <div className="font-mono text-xs tracking-widest uppercase mb-6" style={{ color: ACCENT }}>
-              Agent Fulfillment Rail — North America
+        {/* HERO */}
+        <section id="rail" className="max-w-6xl mx-auto px-6 pt-20 pb-24">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-14 items-center">
+            {/* Left: copy */}
+            <div>
+              <div
+                className="inline-flex items-center gap-2 font-mono text-xs tracking-widest uppercase mb-7 px-3 py-1.5 rounded-full"
+                style={{ color: t.midStrong, border: `1px solid ${t.cardBorder}`, backgroundColor: t.cardBg }}
+              >
+                <span
+                  className="pulse-dot inline-block w-1.5 h-1.5 rounded-full"
+                  style={{ background: "#14F195" }}
+                />
+                Agent Fulfillment Rail — North America
+              </div>
+              <h1
+                className="font-display uppercase leading-[0.95] mb-6"
+                style={{ fontWeight: 700, fontSize: "clamp(2.6rem, 6vw, 4.25rem)", letterSpacing: "-0.02em" }}
+              >
+                Print jobs agents can order, <span className="grad-text">pay for</span>, and track.
+              </h1>
+              <p className="text-base leading-relaxed mb-4" style={{ color: t.mid, maxWidth: "34rem" }}>
+                Advertek Agent is the fulfillment rail behind advertekprinting.com. Machine-readable
+                specs in, a shipped print job out — no quote emails, no PO cycles, no human in the
+                loop unless something breaks.
+              </p>
+              <p className="text-base leading-relaxed mb-9" style={{ color: t.mid, maxWidth: "34rem" }}>
+                Offset, digital, wide format, packaging, and bindery — the same floor that runs the
+                storefront, now callable over an API and settled in USDC on Solana.
+              </p>
+              <div className="flex flex-wrap items-center gap-4 mb-8">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsFormOpen(true);
+                  }}
+                  className="font-mono text-xs tracking-widest uppercase px-6 py-3.5 rounded-md"
+                  style={{ backgroundColor: ACCENT, color: "#FFFFFF", boxShadow: `0 10px 34px ${t.glow}` }}
+                >
+                  Request Rail Access
+                </button>
+                <a
+                  href="#integration"
+                  className="font-mono text-xs tracking-widest uppercase px-6 py-3.5 rounded-md"
+                  style={{ border: `1px solid ${t.cardBorder}`, backgroundColor: t.cardBg, color: t.text }}
+                >
+                  Explore the API
+                </a>
+              </div>
+              <div className="flex flex-wrap items-center gap-2.5">
+                {heroChips.map((chip) => (
+                  <span
+                    key={chip}
+                    className="font-mono text-xs px-3 py-1.5 rounded-full"
+                    style={{ color: t.mid, border: `1px solid ${t.line}` }}
+                  >
+                    {chip}
+                  </span>
+                ))}
+              </div>
             </div>
-            <h1
-              className="font-display uppercase leading-none mb-6"
-              style={{ fontWeight: 700, fontSize: "3.25rem", letterSpacing: "-0.01em" }}
+
+            {/* Right: settlement terminal */}
+            <div className={`stamp-in ${mounted ? "mounted" : ""}`}>
+              <div className="rounded-xl overflow-hidden" style={{ ...glassCard, boxShadow: isDark ? "0 30px 80px rgba(0,0,0,0.45)" : "0 30px 80px rgba(11,18,32,0.12)" }}>
+                {/* window header */}
+                <div
+                  className="flex items-center justify-between px-4 py-3"
+                  style={{ borderBottom: `1px solid ${t.cardBorder}` }}
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full" style={{ background: "#FF5F57" }} />
+                    <span className="w-2.5 h-2.5 rounded-full" style={{ background: "#FEBC2E" }} />
+                    <span className="w-2.5 h-2.5 rounded-full" style={{ background: "#28C840" }} />
+                  </div>
+                  <span className="font-mono text-xs tracking-widest uppercase" style={{ color: t.mid }}>
+                    advertek://rail
+                  </span>
+                  <RegMark />
+                </div>
+
+                {/* ticket body */}
+                <div className="p-6">
+                  <div className="flex items-start justify-between mb-5">
+                    <div>
+                      <div className="font-mono text-xs tracking-widest uppercase" style={{ color: t.mid }}>
+                        Job Ticket
+                      </div>
+                      <div className="font-mono text-sm mt-1" style={{ color: t.text }}>AGT-004471</div>
+                    </div>
+                    <div
+                      className="grad-border flex items-center gap-2 font-mono text-xs px-3 py-1.5 rounded-full"
+                      style={{ color: t.text }}
+                    >
+                      <span className="pulse-dot inline-block w-1.5 h-1.5 rounded-full" style={{ background: "#14F195" }} />
+                      SOL · USDC — Confirmed
+                    </div>
+                  </div>
+
+                  <div className="border-t mb-5" style={{ borderColor: t.cardBorder }} />
+
+                  <dl className="font-mono text-xs space-y-2.5">
+                    {[
+                      ["PRODUCT", "Wide Format — 24×36 Vinyl Banner"],
+                      ["QTY", "40"],
+                      ["SUBSTRATE", "13oz Matte Vinyl"],
+                      ["STATUS", "In Production"],
+                      ["SETTLEMENT", "91.25 USDC"],
+                    ].map(([k, v]) => (
+                      <div key={k} className="flex justify-between gap-4">
+                        <dt style={{ color: t.mid }}>{k}</dt>
+                        <dd
+                          className="text-right"
+                          style={{ color: k === "STATUS" ? ACCENT : t.text, fontWeight: k === "STATUS" ? 600 : 400 }}
+                        >
+                          {v}
+                        </dd>
+                      </div>
+                    ))}
+                  </dl>
+                </div>
+
+                {/* code payload */}
+                <div className="px-5 py-5 font-mono text-xs leading-relaxed" style={{ backgroundColor: t.payloadBg }}>
+                  <div className="mb-3 tracking-widest uppercase" style={{ color: "#14F195", fontSize: "0.65rem" }}>
+                    Originating request
+                  </div>
+                  {payloadLines.map((line, i) => (
+                    <div
+                      key={`${String(i)}-${line}`}
+                      className={`payload-line ${mounted ? "mounted" : ""}`}
+                      style={{ transitionDelay: `${String(i * 45 + 200)}ms`, color: t.payloadText, opacity: 0.92 }}
+                    >
+                      {line}
+                    </div>
+                  ))}
+                  <div className="mt-4 mb-2 tracking-widest uppercase" style={{ color: t.mid, fontSize: "0.65rem" }}>
+                    200 OK
+                  </div>
+                  {responseLines.map((line, i) => (
+                    <div
+                      key={`r-${String(i)}`}
+                      className={`payload-line ${mounted ? "mounted" : ""}`}
+                      style={{ transitionDelay: `${String(i * 45 + 700)}ms`, color: "#7EE7C0" }}
+                    >
+                      {line}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* STATS */}
+        <section style={{ borderTop: `1px solid ${t.line}`, borderBottom: `1px solid ${t.line}`, backgroundColor: t.cardBg }}>
+          <div className="max-w-6xl mx-auto px-6 py-12 grid grid-cols-2 md:grid-cols-4 gap-8">
+            {stats.map(([n, l, grad]) => (
+              <div key={l}>
+                <div
+                  className={`font-display ${grad ? "grad-text" : ""}`}
+                  style={{ fontWeight: 700, fontSize: "2rem", color: grad ? undefined : t.text, lineHeight: 1.05 }}
+                >
+                  {n}
+                </div>
+                <div className="font-mono text-xs tracking-wide mt-2" style={{ color: t.mid }}>{l}</div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* PIPELINE */}
+        <section>
+          <div className="max-w-6xl mx-auto px-6 py-24">
+            <SectionHeading eyebrow="How a job moves" title="Request to dispatch, in order" theme={t} />
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              {pipeline.map((s) => (
+                <div
+                  key={s.n}
+                  className={`lift rounded-lg p-5 ${s.onChain ? "grad-border" : ""}`}
+                  style={{
+                    ...glassBase,
+                    borderTop: s.onChain ? `1px solid ${t.cardBorder}` : `2px solid ${ACCENT}`,
+                    borderRight: `1px solid ${t.cardBorder}`,
+                    borderBottom: `1px solid ${t.cardBorder}`,
+                    borderLeft: `1px solid ${t.cardBorder}`,
+                  }}
+                >
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="font-mono text-xs" style={{ color: t.mid }}>{s.n}</div>
+                    {s.onChain && (
+                      <span
+                        className="font-mono px-2 py-0.5 rounded-full grad-text"
+                        style={{ fontSize: "0.6rem", letterSpacing: "0.12em", border: `1px solid ${t.cardBorder}` }}
+                      >
+                        ON-CHAIN
+                      </span>
+                    )}
+                  </div>
+                  <div className="font-display uppercase mb-2" style={{ fontWeight: 700, fontSize: "1.2rem", color: t.text }}>
+                    {s.t}
+                  </div>
+                  <p className="text-sm leading-relaxed" style={{ color: t.mid }}>{s.d}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* CAPABILITIES */}
+        <section id="capabilities" style={{ backgroundColor: t.panel, borderTop: `1px solid ${t.line}` }}>
+          <div className="max-w-6xl mx-auto px-6 py-24">
+            <SectionHeading eyebrow="Spec sheet" title="Everything the floor already runs" theme={t} />
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {capabilities.map(([name, desc]) => (
+                <div
+                  key={name}
+                  className="lift rounded-lg p-5"
+                  style={glassCard}
+                >
+                  <div className="font-mono text-sm mb-1 uppercase tracking-wide" style={{ color: t.text }}>{name}</div>
+                  <div className="text-sm" style={{ color: t.mid }}>{desc}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* INTEGRATION */}
+        <section id="integration" style={{ borderTop: `1px solid ${t.line}` }}>
+          <div className="max-w-6xl mx-auto px-6 py-24">
+            <SectionHeading eyebrow="Stack" title="Built to be called, not emailed" theme={t} />
+
+            <div className="flex flex-col md:flex-row md:items-stretch gap-0 mb-8">
+              {stack.map((item, i) => (
+                <Fragment key={item.role}>
+                  <div
+                    className={`flex-1 p-5 rounded-lg ${item.onChain ? "grad-border" : ""}`}
+                    style={{
+                      ...glassBase,
+                      border: item.onChain ? `1px solid transparent` : `1px solid ${t.cardBorder}`,
+                    }}
+                  >
+                    <div
+                      className={`font-mono text-sm mb-1 ${item.onChain ? "grad-text" : ""}`}
+                      style={{ color: item.onChain ? undefined : t.text }}
+                    >
+                      {item.role}
+                    </div>
+                    <div className="text-xs" style={{ color: t.mid }}>{item.detail}</div>
+                  </div>
+                  {i < stack.length - 1 && (
+                    <div
+                      className="flex items-center justify-center font-mono text-sm px-2 py-3 md:py-0"
+                      style={{ color: ACCENT }}
+                      aria-hidden="true"
+                    >
+                      →
+                    </div>
+                  )}
+                </Fragment>
+              ))}
+            </div>
+
+            <p className="text-sm leading-relaxed mb-12 max-w-2xl" style={{ color: t.mid }}>
+              Settlement runs on Solana with QuickNode as RPC infrastructure. OKX handles treasury
+              on/off-ramp. The rail is exposed as a keyless REST + MCP surface, sitting in front of
+              the same production systems that run advertekprinting.com.
+            </p>
+
+            <div className="rounded-xl p-6 md:p-8" style={glassCard}>
+              <IntegrationExplorer theme={t} />
+            </div>
+          </div>
+        </section>
+
+        {/* PITCH DECK */}
+        <section id="deck" style={{ backgroundColor: t.panel, borderTop: `1px solid ${t.line}` }}>
+          <div className="max-w-6xl mx-auto px-6 py-24">
+            <SectionHeading eyebrow="The pitch" title="Ten slides, if you want the whole story" theme={t} />
+            <DeckViewer theme={t} />
+          </div>
+        </section>
+
+        {/* FOOTER / CTA */}
+        <footer id="contact" style={{ backgroundColor: t.bg, borderTop: `1px solid ${t.line}` }}>
+          <div className="h-0.5 w-full" style={{ background: SOLANA_GRAD, opacity: 0.8 }} />
+          <div className="max-w-6xl mx-auto px-6 py-20">
+            <h2
+              className="font-display uppercase mb-6"
+              style={{ fontWeight: 700, fontSize: "clamp(1.7rem, 3.6vw, 2.4rem)", letterSpacing: "-0.01em" }}
             >
-              Print jobs agents can order, pay for, and track.
-            </h1>
-            <p className="text-base leading-relaxed mb-4" style={{ color: t.mid, maxWidth: "34rem" }}>
-              Advertek Agent is the fulfillment rail behind advertekprinting.com.
-              Machine-readable specs in, a shipped print job out — no quote
-              emails, no PO cycles, no human in the loop unless something
-              breaks.
-            </p>
-            <p className="text-base leading-relaxed mb-10" style={{ color: t.mid, maxWidth: "34rem" }}>
-              Offset, digital, wide format, packaging, and bindery — the same
-              floor that runs the storefront, now callable directly.
-            </p>
-            <div className="flex flex-wrap items-center gap-4">
+              Building an agent that needs to print something?
+            </h2>
+            <div className="flex flex-wrap items-center gap-4 mb-16">
               <button
                 type="button"
                 onClick={() => {
                   setIsFormOpen(true);
                 }}
-                className="font-mono text-xs tracking-widest uppercase px-6 py-3"
-                style={{ backgroundColor: ACCENT, color: "#FFFFFF" }}
+                className="font-mono text-xs tracking-widest uppercase px-6 py-3.5 rounded-md"
+                style={{ backgroundColor: ACCENT, color: "#FFFFFF", boxShadow: `0 10px 34px ${t.glow}` }}
               >
                 Request Rail Access
               </button>
               <a
-                href="#integration"
-                className="font-mono text-xs tracking-widest uppercase px-6 py-3"
-                style={{ border: `1px solid ${t.line}`, color: t.text }}
+                href="https://advertekprinting.com"
+                className="font-mono text-xs tracking-widest uppercase px-6 py-3.5 rounded-md"
+                style={{ border: `1px solid ${t.cardBorder}`, backgroundColor: t.cardBg, color: t.text }}
               >
-                View Integration
+                advertekprinting.com
               </a>
             </div>
-          </div>
-
-          {/* Right: signature — job ticket + payload */}
-          <div className={`stamp-in ${mounted ? "mounted" : ""}`}>
-            {/* Job ticket */}
-            <div className="relative p-6" style={{ backgroundColor: t.ticketBg, color: t.ticketText }}>
-              <CropMark className="absolute -top-1 -left-1" stroke={ACCENT} />
-              <CropMark className="absolute -top-1 -right-1" stroke={ACCENT} />
-              <CropMark className="absolute -bottom-1 -left-1" stroke={ACCENT} />
-              <CropMark className="absolute -bottom-1 -right-1" stroke={ACCENT} />
-
-              <div className="flex items-start justify-between mb-5">
-                <div>
-                  <div className="font-mono text-xs tracking-widest uppercase" style={{ color: t.ticketMid }}>
-                    Job Ticket
-                  </div>
-                  <div className="font-mono text-sm mt-1">AGT-004471</div>
-                </div>
-                <RegMark />
-              </div>
-
-              <div className="border-t mb-5" style={{ borderColor: t.ticketLine }} />
-
-              <dl className="font-mono text-xs space-y-2.5">
-                <div className="flex justify-between gap-4">
-                  <dt style={{ color: t.ticketMid }}>PRODUCT</dt>
-                  <dd className="text-right">Wide Format — 24×36 Vinyl Banner</dd>
-                </div>
-                <div className="flex justify-between gap-4">
-                  <dt style={{ color: t.ticketMid }}>QTY</dt>
-                  <dd>40</dd>
-                </div>
-                <div className="flex justify-between gap-4">
-                  <dt style={{ color: t.ticketMid }}>SUBSTRATE</dt>
-                  <dd>13oz Matte Vinyl</dd>
-                </div>
-                <div className="flex justify-between gap-4">
-                  <dt style={{ color: t.ticketMid }}>STATUS</dt>
-                  <dd style={{ color: ACCENT, fontWeight: 600 }}>In Production</dd>
-                </div>
-                <div className="flex justify-between gap-4">
-                  <dt style={{ color: t.ticketMid }}>SETTLEMENT</dt>
-                  <dd>SOL — Confirmed</dd>
-                </div>
-              </dl>
-            </div>
-
-            {/* perforation */}
-            <div style={{ borderTop: `1px dashed ${t.line}`, height: "1px" }} />
-
-            {/* payload panel */}
-            <div className="p-6 font-mono text-xs leading-relaxed" style={{ backgroundColor: t.payloadBg }}>
-              <div className="mb-3 tracking-widest uppercase" style={{ color: ACCENT, fontSize: "0.65rem" }}>
-                Originating request
-              </div>
-              {payloadLines.map((line, i) => (
-                // Lines aren't unique (e.g. multiple "  }," closers), so the
-                // index is the only stable key available for this static list.
-                <div
-                  key={`${String(i)}-${line}`}
-                  className={`payload-line ${mounted ? "mounted" : ""}`}
-                  style={{ transitionDelay: `${String(i * 45 + 200)}ms`, color: t.payloadText, opacity: 0.9 }}
-                >
-                  {line}
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* STATS */}
-      <section style={{ backgroundColor: t.panel, borderTop: `1px solid ${t.line}`, borderBottom: `1px solid ${t.line}` }}>
-        <div className="max-w-6xl mx-auto px-6 py-10 grid grid-cols-2 md:grid-cols-4 gap-8">
-          {stats.map(([n, l]) => (
-            <div key={n}>
-              <div className="font-display" style={{ fontWeight: 700, fontSize: "1.75rem", color: t.text }}>{n}</div>
-              <div className="font-mono text-xs tracking-wide mt-1" style={{ color: t.mid }}>{l}</div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* PIPELINE */}
-      <section style={{ backgroundColor: t.bg }}>
-        <div className="max-w-6xl mx-auto px-6 py-20">
-          <div className="font-mono text-xs tracking-widest uppercase mb-3" style={{ color: ACCENT }}>
-            How a job moves
-          </div>
-          <h2 className="font-display uppercase mb-12" style={{ fontWeight: 700, fontSize: "2rem" }}>
-            Request to dispatch, in order
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            {pipeline.map((s) => (
-              <div key={s.n} className="pt-5" style={{ borderTop: `2px solid ${ACCENT}` }}>
-                <div className="font-mono text-xs mb-3" style={{ color: t.mid }}>{s.n}</div>
-                <div className="font-display uppercase mb-2" style={{ fontWeight: 700, fontSize: "1.15rem" }}>
-                  {s.t}
-                </div>
-                <p className="text-sm leading-relaxed" style={{ color: t.mid }}>{s.d}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* CAPABILITIES */}
-      <section id="capabilities" style={{ backgroundColor: t.panel }}>
-        <div className="max-w-6xl mx-auto px-6 py-20">
-          <div className="font-mono text-xs tracking-widest uppercase mb-3" style={{ color: ACCENT }}>
-            Spec sheet
-          </div>
-          <h2 className="font-display uppercase mb-12" style={{ fontWeight: 700, fontSize: "2rem" }}>
-            Everything the floor already runs
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-10 gap-y-8">
-            {capabilities.map(([name, desc]) => (
-              <div key={name} className="pt-4" style={{ borderTop: `1px solid ${t.line}` }}>
-                <div className="font-mono text-sm mb-1 uppercase tracking-wide">{name}</div>
-                <div className="text-sm" style={{ color: t.mid }}>{desc}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* INTEGRATION */}
-      <section id="integration" style={{ backgroundColor: t.bg }}>
-        <div className="max-w-6xl mx-auto px-6 py-20">
-          <div className="font-mono text-xs tracking-widest uppercase mb-3" style={{ color: ACCENT }}>
-            Stack
-          </div>
-          <h2 className="font-display uppercase mb-12" style={{ fontWeight: 700, fontSize: "2rem" }}>
-            Built to be called, not emailed
-          </h2>
-
-          <div className="flex flex-col md:flex-row md:items-stretch gap-0">
-            {stack.map((item, i) => (
-              <Fragment key={item.role}>
-                <div className="flex-1 p-5" style={{ border: `1px solid ${t.line}` }}>
-                  <div className="font-mono text-sm mb-1">{item.role}</div>
-                  <div className="text-xs" style={{ color: t.mid }}>{item.detail}</div>
-                </div>
-                {i < stack.length - 1 && (
-                  <div
-                    className="flex items-center justify-center font-mono text-sm px-2 py-3 md:py-0"
-                    style={{ color: ACCENT }}
-                    aria-hidden="true"
-                  >
-                    →
-                  </div>
-                )}
-              </Fragment>
-            ))}
-          </div>
-
-          <div className="mt-12">
-            <IntegrationExplorer theme={t} />
-          </div>
-        </div>
-      </section>
-
-      {/* PITCH DECK */}
-      <section id="deck" style={{ backgroundColor: t.panel }}>
-        <div className="max-w-6xl mx-auto px-6 py-20">
-          <div className="font-mono text-xs tracking-widest uppercase mb-3" style={{ color: ACCENT }}>
-            The pitch
-          </div>
-          <h2 className="font-display uppercase mb-12" style={{ fontWeight: 700, fontSize: "2rem" }}>
-            Ten slides, if you want the whole story
-          </h2>
-          <DeckViewer theme={t} />
-        </div>
-      </section>
-
-      {/* FOOTER / CTA */}
-      <footer id="contact" style={{ backgroundColor: t.bg, borderTop: `1px solid ${t.line}` }}>
-        <div className="max-w-6xl mx-auto px-6 py-16">
-          <h2 className="font-display uppercase mb-6" style={{ fontWeight: 700, fontSize: "2rem" }}>
-            Building an agent that needs to print something?
-          </h2>
-          <div className="flex flex-wrap items-center gap-4 mb-14">
-            <button
-              type="button"
-              onClick={() => {
-                setIsFormOpen(true);
-              }}
-              className="font-mono text-xs tracking-widest uppercase px-6 py-3"
-              style={{ backgroundColor: ACCENT, color: "#FFFFFF" }}
+            <div
+              className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 pt-6 font-mono text-xs"
+              style={{ borderTop: `1px solid ${t.line}`, color: t.mid }}
             >
-              Request Rail Access
-            </button>
-            <span className="font-mono text-xs" style={{ color: t.mid }}>
-              advertekprinting.com
-            </span>
-          </div>
-          <div
-            className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 pt-6 font-mono text-xs"
-            style={{ borderTop: `1px solid ${t.line}`, color: t.mid }}
-          >
-            <div className="flex items-center gap-3">
-              <AdvertekMark size={18} />
-              <span>Advertek Printing — North York, ON</span>
+              <div className="flex items-center gap-3">
+                <AdvertekMark size={18} />
+                <span>Advertek Printing — North York, ON</span>
+              </div>
+              <span style={{ color: ACCENT, letterSpacing: "0.15em" }}>GOING BEYOND INK</span>
             </div>
-            <span style={{ color: ACCENT, letterSpacing: "0.15em" }}>GOING BEYOND INK</span>
           </div>
-        </div>
-      </footer>
+        </footer>
+      </div>
 
       {isFormOpen && (
         <RailAccessForm
