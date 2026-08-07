@@ -9,6 +9,7 @@
     "build": "pnpm run build:deps && next build",
     "start": "next start",
     "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run --passWithNoTests",
     "lint": "eslint app components lib",
     "clean": "rm -rf .next"
   },
@@ -35,6 +36,7 @@
     "@types/node": "^24.0.15",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.4",
-    "tailwindcss": "^4.3.3"
+    "tailwindcss": "^4.3.3",
+    "vitest": "^3.2.4"
   }
 }

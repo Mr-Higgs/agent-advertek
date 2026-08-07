@@ -28,10 +28,12 @@ settlement wallet's associated token account plus a
    SPL `transferChecked` (integer USDC base units, 6 decimals — never floats)
    + Memo (`MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr`).
 
-**Known gap:** server-side order creation/persistence is still being built on
-the rail, so the demo generates its own client-side order id (uuid4) plus a
-nonce for the payment memo. Once the rail exposes an order-creation tool, the
-agent should use the server-issued order id instead.
+Order ids come from the rail: the agent calls the `create_order` MCP tool,
+which mints the order id, prices the order, persists it, and returns the memo,
+settlement wallet, and exact USDC amount. `pay_order` takes that `orderId`,
+`memo`, and `amountBaseUnits` and pays the request verbatim — it rejects a
+memo that does not belong to the given order id, and the demo no longer mints
+a client-side uuid.
 
 ## Setup
 

@@ -7,13 +7,11 @@ import type { AdvertekFulfillmentClient } from "./advertek-client.js";
 import { buildAdvertekCreateOrderRequest, type FulfillmentOrderInput } from "./request-builder.js";
 
 /**
- * @blocker — Order persistence doesn't exist yet in this codebase (see
- * `@advertek/payments`' `OrderStatusUpdater` `@blocker STEP_9` note).
  * Submitting an order to Advertek needs the full order — SKU specs,
  * shipping address, declared customs value — keyed by our internal order
- * id, which nothing here currently stores. This interface is the seam a
- * real order-persistence backend fills in; inject a mock in tests until
- * then.
+ * id. `POST /api/orders` (and the `create_order` MCP tool) write that
+ * payload through `@advertek/db`'s `saveFulfillmentInput`; this interface
+ * is the read seam over it. Inject a fake in tests.
  */
 export interface OrderDetailsLookup {
   getOrderDetailsForFulfillment(orderId: string): Promise<FulfillmentOrderInput>;

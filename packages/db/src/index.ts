@@ -23,12 +23,18 @@ export {
   createPostgresOrderStore,
   OrderNotFoundError,
   readFulfillmentInput,
+  readOrderStatus,
   type OrderRow,
+  type OrderStatusEventView,
+  type OrderStatusView,
   type OrderStore,
 } from "./orders.js";
 export { createPostgresOrderDetailsLookup } from "./order-details.js";
 export {
   createPostgresWebhookSubscriptionLookup,
+  createWebhookSubscription,
+  webhookSubscriptionInsertSchema,
   WebhookSubscriptionNotFoundError,
+  type WebhookSubscriptionInsert,
 } from "./subscriptions.js";
 export { createPostgresSweepLedger } from "./sweep-ledger.js";

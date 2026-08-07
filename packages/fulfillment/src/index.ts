@@ -49,6 +49,13 @@ export {
 export { formatUsdCentsAsDecimalString } from "./money.js";
 
 export {
+  fulfillmentOrderIntakeItemSchema,
+  fulfillmentOrderIntakeSchema,
+  toFulfillmentOrderInput,
+  type FulfillmentOrderIntake,
+} from "./order-intake.js";
+
+export {
   buildAdvertekCreateOrderRequest,
   fulfillmentOrderInputSchema,
   fulfillmentOrderItemInputSchema,
