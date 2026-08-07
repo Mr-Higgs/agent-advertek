@@ -25,13 +25,11 @@ export interface RealtimeQuote {
 }
 
 /**
- * @blocker STEP_11 — Both injected clients are stubs until real
- * Advertek pricing and spot-rate integrations land.
+ * Both clients are injected: production hosts pass the HTTP clients from
+ * `http-clients.ts`, tests pass fakes.
  */
 export interface CreateRealtimeQuoteDeps {
-  /** @blocker STEP_11 — replace mock with real AdvertekPricingClient */
   readonly pricingClient: AdvertekPricingClient;
-  /** @blocker STEP_11 — replace mock with real SpotRateClient */
   readonly spotRateClient: SpotRateClient;
   readonly now?: () => Date;
 }

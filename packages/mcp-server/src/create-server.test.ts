@@ -15,6 +15,7 @@ import {
   buildSkuQuoteToolResult,
   skuQuoteToolResultSchema,
 } from "./sku-quote-tool.js";
+import type { CreatedOrder } from "./create-order-tool.js";
 
 const validSpec: SkuSpec = {
   productLine: "packaging",
@@ -202,7 +203,7 @@ describe("get_sku_quote payload", () => {
 });
 
 describe("createAdvertekMcpServer", () => {
-  it("registers get_catalog, get_quote, and get_sku_quote tools", () => {
+  it("registers get_catalog, get_quote, get_sku_quote, and create_order tools", () => {
     const server = createAdvertekMcpServer({
       executeQuote: (): Promise<RealtimeQuote> =>
         Promise.resolve({
@@ -224,6 +225,15 @@ describe("createAdvertekMcpServer", () => {
           quotedAt: new Date("2026-08-06T20:00:00.000Z"),
         }),
       spotRateClient,
+      executeCreateOrder: (): Promise<CreatedOrder> =>
+        Promise.resolve({
+          orderId: "ord_1",
+          memo: "advertek:order:ord_1:nonce",
+          settlementWallet: "Sett1ement",
+          amountBaseUnits: 9_417_000n,
+          usdcMintAddress: "Mint",
+          usdcDecimals: 6,
+        }),
     });
 
     const tools = (
@@ -233,7 +243,12 @@ describe("createAdvertekMcpServer", () => {
     )._registeredTools;
 
     expect(Object.keys(tools)).toEqual(
-      expect.arrayContaining(["get_catalog", "get_quote", "get_sku_quote"]),
+      expect.arrayContaining([
+        "get_catalog",
+        "get_quote",
+        "get_sku_quote",
+        "create_order",
+      ]),
     );
   });
 });

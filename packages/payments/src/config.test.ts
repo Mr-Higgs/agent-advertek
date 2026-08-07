@@ -1,6 +1,10 @@
 import { Keypair } from "@solana/web3.js";
 import { describe, expect, it } from "vitest";
-import { loadPaymentsConfig, loadQuickNodeWebhookConfig } from "./config.js";
+import {
+  loadPaymentsConfig,
+  loadQuickNodeWebhookConfig,
+  loadSettlementPublicConfig,
+} from "./config.js";
 
 const walletA = Keypair.generate().publicKey.toBase58();
 const walletB = Keypair.generate().publicKey.toBase58();
@@ -39,6 +43,40 @@ describe("loadPaymentsConfig", () => {
         ADVERTEK_SETTLEMENT_WALLET: walletA,
       }),
     ).toThrow(/USDC_MINT_ADDRESS/);
+  });
+});
+
+describe("loadSettlementPublicConfig", () => {
+  it("loads only the public settlement fields, with no RPC or secret key", () => {
+    const config = loadSettlementPublicConfig({
+      USDC_MINT_ADDRESS: mint,
+      ADVERTEK_SETTLEMENT_WALLET: walletA,
+      SETTLEMENT_WALLET_SECRET_KEY: "[1,2,3]",
+    });
+
+    expect(config).toEqual({
+      usdcMintAddress: mint,
+      settlementWallet: walletA,
+      usdcDecimals: 6,
+    });
+  });
+
+  it("does not require QUICKNODE_RPC_URL", () => {
+    expect(() =>
+      loadSettlementPublicConfig({
+        USDC_MINT_ADDRESS: mint,
+        ADVERTEK_SETTLEMENT_WALLET: walletB,
+      }),
+    ).not.toThrow();
+  });
+
+  it("rejects an invalid settlement wallet", () => {
+    expect(() =>
+      loadSettlementPublicConfig({
+        USDC_MINT_ADDRESS: mint,
+        ADVERTEK_SETTLEMENT_WALLET: "not-a-pubkey",
+      }),
+    ).toThrow(/ADVERTEK_SETTLEMENT_WALLET/);
   });
 });
 

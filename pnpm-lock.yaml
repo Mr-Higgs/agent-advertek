@@ -121,6 +121,9 @@ importers:
       tailwindcss:
         specifier: ^4.3.3
         version: 4.3.3
+      vitest:
+        specifier: ^3.2.4
+        version: 3.2.7(@types/node@24.13.3)(jiti@2.7.0)(lightningcss@1.33.0)
 
   packages/catalog:
     dependencies:
@@ -187,6 +190,9 @@ importers:
       '@advertek/catalog':
         specifier: workspace:*
         version: link:../catalog
+      '@advertek/fulfillment':
+        specifier: workspace:*
+        version: link:../fulfillment
       '@advertek/quote-api':
         specifier: workspace:*
         version: link:../quote-api

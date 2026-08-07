@@ -36,6 +36,8 @@ const catalogResponseSchema = z.object({
       estimatedPriceUsdc: z.object({ amountBaseUnits: z.string() }),
     }),
   ),
+  /** False once real pricing and spot-rate upstreams are configured. */
+  demoPricing: z.boolean().default(true),
 });
 
 type CatalogResponse = z.infer<typeof catalogResponseSchema>;
@@ -87,6 +89,12 @@ const MCP_TOOLS: ReadonlyArray<{
     description:
       "Shortcut for the print-on-demand catalog: pass a raw SKU code (e.g. \"MUG-11-WHT\") and a quantity, no full specification needed. Returns MSRP in CAD cents plus the USDC-equivalent settlement amount.",
   },
+  {
+    name: "create_order",
+    title: "Create an Advertek order and get its USDC payment request",
+    description:
+      "Places a real order (addresses, items, customs values, payer wallet, optional status-webhook callback URL) and returns the rail-issued orderId, memo, settlement wallet, and exact USDC amount to pay. Advertek mints the order id and prices the order — agents never invent an order id or an amount.",
+  },
 ];
 
 const MCP_CONNECT_SNIPPET = `{
@@ -129,8 +137,8 @@ interface IntegrationExplorerProps {
  * `get_catalog` tool returns and prices a sample job through `POST
  * /api/quotes`. No payment, order intake, or settlement runs here.
  *
- * @blocker STEP_11 — quote pricing uses the mocked pricing / spot-rate
- * clients in `lib/quotes.ts`, so every figure shown is a demo value.
+ * Figures are labelled non-binding demo values until the catalog response
+ * reports that real pricing upstreams are configured (`demoPricing: false`).
  */
 export function IntegrationExplorer({ theme: t }: IntegrationExplorerProps) {
   const [catalogState, setCatalogState] = useState<CatalogState>({ status: "idle" });
@@ -244,14 +252,16 @@ export function IntegrationExplorer({ theme: t }: IntegrationExplorerProps) {
 
   return (
     <div>
-      <div
-        className="font-mono text-xs leading-relaxed p-4 mb-8"
-        style={{ border: `1px solid ${ACCENT}`, color: t.text }}
-      >
-        <span style={{ color: ACCENT }}>DEMO PRICING —</span> every CAD and USDC figure
-        below is non-binding. Quote pricing runs on mocked pricing and spot-rate wiring
-        (STEP_11). Nothing here creates an order, takes payment, or settles funds.
-      </div>
+      {catalog?.demoPricing !== false && (
+        <div
+          className="font-mono text-xs leading-relaxed p-4 mb-8"
+          style={{ border: `1px solid ${ACCENT}`, color: t.text }}
+        >
+          <span style={{ color: ACCENT }}>DEMO PRICING —</span> every CAD and USDC figure
+          below is non-binding. Quote pricing runs on mocked pricing and spot-rate
+          wiring. Nothing here creates an order, takes payment, or settles funds.
+        </div>
+      )}
 
       <div className="flex flex-wrap items-center gap-4 mb-8">
         <button

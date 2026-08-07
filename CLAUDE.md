@@ -55,9 +55,10 @@ CI (`.github/workflows/ci.yml`) runs build → typecheck → lint → test on ev
 
 A single order flows across packages like this:
 
-1. **`@advertek/mcp-server`** exposes three agent tools — `get_catalog`,
-   `get_quote` (full `SkuSpec`), and `get_sku_quote` (raw print-on-demand SKU
-   code). The tool descriptions in `create-server.ts` are the agent's only
+1. **`@advertek/mcp-server`** exposes four agent tools — `get_catalog`,
+   `get_quote` (full `SkuSpec`), `get_sku_quote` (raw print-on-demand SKU
+   code), and `create_order` (order intake, injected via
+   `AdvertekMcpServerDeps.executeCreateOrder`). The tool descriptions in `create-server.ts` are the agent's only
    documentation, so they are deliberately verbose and instruct agents never to
    invent prices or SKU codes.
 2. **`@advertek/quote-api`** prices it: `createRealtimeQuote` (spec →
@@ -136,16 +137,32 @@ peer version.
 
 ## Known stubs
 
-`@blocker` comments mark deliberate gaps. Grep for them before assuming a path is
-wired up end to end:
+`@blocker` comments mark deliberate gaps; grep for them before assuming a path
+is wired up end to end. The two long-standing ones (`STEP_9` order intake,
+`STEP_11` fabricated pricing) are closed. What remains conditional:
 
-- **`STEP_11`** — `AdvertekPricingClient` and `SpotRateClient` are interfaces
-  whose only implementations are mocks in `packages/mcp-server/src/stdio-main.ts`.
-  `get_quote` prices are fabricated; `get_sku_quote`'s CAD prices are real (from
-  the checked-in POD price list) but its CAD→USDC rate is not.
-- **`STEP_9`** — order persistence now exists in `@advertek/db` (Postgres
-  implementations of `OrderStatusUpdater`, `OrderDetailsLookup`,
-  `WebhookSubscriptionLookup`, `SweepLedger`, plus a processed-deliveries
-  idempotency store). What is still missing is **order intake**: no endpoint
-  creates order rows or webhook subscriptions yet, so the webhook handlers
-  have nothing to look up until that lands.
+- **Pricing is deployment-gated, not stubbed.**
+  `createHttpAdvertekPricingClient` / `createHttpSpotRateClient`
+  (`packages/quote-api/src/http-clients.ts`) are the production clients;
+  `apps/web/lib/quotes.ts` uses them when `ADVERTEK_PRICING_API_URL` /
+  `SPOT_RATE_API_URL` are set and otherwise falls back to fixed inspection
+  mocks, surfacing `demoPricing: true` so the landing page labels the figures.
+  Their upstream response contracts are our expectation, not a vendor-verified
+  spec. `packages/mcp-server/src/stdio-main.ts` stays fully mock-wired on
+  purpose — it is the local tool-inspection entry.
+- **Rate limiting is per serverless instance** (`apps/web/lib/rate-limit.ts`);
+  a global limit needs a shared store such as Upstash.
+
+## Agent-facing surface
+
+- `POST /api/orders` and the `create_order` MCP tool are the order intake:
+  they mint `ord_<uuid>` server-side, re-price every item, persist the
+  fulfillment payload plus an optional `webhook_subscriptions` row, and return
+  a keyless payment request (memo, settlement wallet, USDC amount). Agents
+  never supply an order id or an amount.
+- `GET /api/orders/[id]` returns the order and its `order_status_events`
+  timeline.
+- `/api/quotes`, `/api/orders`, and `/api/mcp` are behind API-key auth plus
+  rate limiting (`apps/web/lib/api-guard.ts`); `/api/catalog` stays public.
+  Auth turns on as soon as `ADVERTEK_API_KEYS` is set — these are
+  request-authorization keys, never money-moving credentials.

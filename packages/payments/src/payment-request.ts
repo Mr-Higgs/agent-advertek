@@ -8,7 +8,7 @@ import {
   TransactionInstruction,
 } from "@solana/web3.js";
 import { z } from "zod";
-import type { PaymentsConfig } from "./config.js";
+import type { SettlementPublicConfig } from "./config.js";
 
 /** Solana Memo program (shared mainnet/devnet). */
 export const MEMO_PROGRAM_ID = new PublicKey(
@@ -85,8 +85,14 @@ export function createMemoInstruction(
   });
 }
 
+/**
+ * Builds the keyless payment request an agent pays: a USDC transfer to the
+ * settlement wallet plus a memo carrying the internal order id. Only needs
+ * {@link SettlementPublicConfig} — no settlement secret key is ever required
+ * to *request* a payment.
+ */
 export function createUsdcPaymentRequest(
-  config: PaymentsConfig,
+  config: SettlementPublicConfig,
   input: PaymentRequestInput,
   options?: {
     readonly createNonce?: () => string;

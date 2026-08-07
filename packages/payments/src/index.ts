@@ -1,8 +1,10 @@
 export {
   loadPaymentsConfig,
   loadQuickNodeWebhookConfig,
+  loadSettlementPublicConfig,
   type PaymentsConfig,
   type QuickNodeWebhookConfig,
+  type SettlementPublicConfig,
 } from "./config.js";
 export {
   RpcRetryExhaustedError,

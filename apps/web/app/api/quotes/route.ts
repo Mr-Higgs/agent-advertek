@@ -2,6 +2,7 @@ import { quoteRequestSchema, type QuoteCalculator } from "@advertek/quote-api";
 import { skuSpecSchema, type Quote } from "@advertek/types";
 import { randomUUID } from "node:crypto";
 import { ZodError } from "zod";
+import { guardApiRequest } from "@/lib/api-guard";
 import { jsonResponse } from "@/lib/json";
 import { createQuoteExecutors } from "@/lib/quotes";
 
@@ -10,8 +11,9 @@ export const runtime = "nodejs";
 const QUOTE_TTL_MS = 15 * 60 * 1000;
 
 /**
- * Pricing core behind the REST boundary — the same mocked STEP_11 wiring the
- * MCP tools use. Interprets `specification` as a full `SkuSpec`.
+ * Pricing core behind the REST boundary — the same wiring the MCP tools use
+ * (`lib/quotes.ts`, real clients when configured). Interprets `specification`
+ * as a full `SkuSpec`.
  */
 const calculateQuote: QuoteCalculator = async (request) => {
   const { executeQuote } = createQuoteExecutors();
@@ -28,6 +30,11 @@ const calculateQuote: QuoteCalculator = async (request) => {
 };
 
 export async function POST(request: Request): Promise<Response> {
+  const blocked = guardApiRequest(request, "quotes");
+  if (blocked) {
+    return blocked;
+  }
+
   try {
     const quoteRequest = quoteRequestSchema.parse(await request.json());
     const quote: Quote = await calculateQuote(quoteRequest);

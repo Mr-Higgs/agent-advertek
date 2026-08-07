@@ -16,18 +16,15 @@ import {
   skuQuoteToolResultSchema,
   type SkuQuoteExecutor,
 } from "./sku-quote-tool.js";
+import {
+  buildCreateOrderToolResult,
+  createOrderToolInputSchema,
+  createOrderToolResultSchema,
+  type CreateOrderExecutor,
+} from "./create-order-tool.js";
 
 export interface AdvertekMcpServerDeps {
-  /**
-   * @blocker STEP_11 — Quote executor must eventually use real
-   * AdvertekPricingClient and SpotRateClient integrations.
-   */
   readonly executeQuote: QuoteExecutor;
-  /**
-   * @blocker STEP_11 — CAD prices here are real (from the checked-in POD
-   * price list), but the CAD->USDC SpotRateClient it's built on is still a
-   * stub. See `@advertek/quote-api`'s `createSkuQuote`.
-   */
   readonly executeSkuQuote: SkuQuoteExecutor;
   /**
    * Used by get_catalog to annotate skuCatalog with a live (non-binding)
@@ -35,6 +32,12 @@ export interface AdvertekMcpServerDeps {
    * executeQuote / executeSkuQuote.
    */
   readonly spotRateClient: SpotRateClient;
+  /**
+   * Order intake: mints the order id, prices the job, persists it, and
+   * returns the payment request. Injected because persistence and the
+   * settlement config live in the host app, not in this package.
+   */
+  readonly executeCreateOrder: CreateOrderExecutor;
 }
 
 function structuredToolResponse<T extends Record<string, unknown>>(result: T) {
@@ -120,6 +123,24 @@ export function registerAdvertekTools(
       };
     },
   );
+
+  server.registerTool(
+    "create_order",
+    {
+      title: "Create an Advertek order and get its USDC payment request",
+      description:
+        "Place a real Advertek print order and receive the payment request that makes it payable. Pass the full order (customerOrderNumber, locationCode, shippingService, soldTo/shipTo addresses, and items — each with an internalItemId, a complete SKU spec exactly as get_quote accepts, and customsValueUsdCents as an integer string of US cents), the base58 Solana public key of the wallet that will pay, and optionally an https callbackUrl to receive signed order-status webhooks. Advertek mints the order id and prices the order itself: never invent, guess, or reuse an order id, and never pay an amount you calculated yourself. On success the response carries orderId, memo, settlementWallet, amountBaseUnits (USDC base units, 6 decimals, as a decimal string), and usdcMintAddress — to pay, send exactly amountBaseUnits of that USDC mint to settlementWallet in a single Solana transaction that also carries the returned memo string verbatim in a Memo-program instruction. The memo is how the rail matches your transfer to this order; a payment without it, with a different amount, or to a different address will not be credited. Call get_quote or get_sku_quote first if you need to know the price before committing. On validation or intake failure the response has ok=false with structured issues — fix them and call create_order again rather than paying anything.",
+      inputSchema: createOrderToolInputSchema,
+      outputSchema: createOrderToolResultSchema,
+    },
+    async (args) => {
+      const result = await buildCreateOrderToolResult(deps.executeCreateOrder, args);
+      return {
+        ...structuredToolResponse(result),
+        isError: !result.ok,
+      };
+    },
+  );
 }
 
 export {
@@ -142,3 +163,13 @@ export {
   type SkuQuoteExecutor,
   type SkuQuoteToolResult,
 } from "./sku-quote-tool.js";
+export {
+  buildCreateOrderToolResult,
+  createOrderRequestSchema,
+  createOrderToolInputSchema,
+  createOrderToolResultSchema,
+  type CreatedOrder,
+  type CreateOrderExecutor,
+  type CreateOrderRequest,
+  type CreateOrderToolResult,
+} from "./create-order-tool.js";

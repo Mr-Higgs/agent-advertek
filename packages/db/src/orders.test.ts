@@ -4,6 +4,7 @@ import {
   createPostgresOrderStore,
   OrderNotFoundError,
   readFulfillmentInput,
+  readOrderStatus,
 } from "./orders.js";
 import { createFakeExecutor, fulfillmentInputFixture, lastQuery } from "./test-utils.js";
 
@@ -109,6 +110,59 @@ describe("createPostgresOrderStore.setVendorOrderId", () => {
     await expect(store.setVendorOrderId("ord_missing", "adv_1")).rejects.toBeInstanceOf(
       OrderNotFoundError,
     );
+  });
+});
+
+describe("readOrderStatus", () => {
+  it("returns the order row with its status timeline", async () => {
+    const executor = createFakeExecutor((text) =>
+      text.includes("order_status_events")
+        ? [
+            {
+              status: "pending-payment",
+              occurred_at: new Date("2026-08-01T12:00:00.000Z"),
+              recorded_at: new Date("2026-08-01T12:00:01.000Z"),
+            },
+            {
+              status: "paid",
+              occurred_at: "2026-08-01T12:05:00.000Z",
+              recorded_at: "2026-08-01T12:05:01.000Z",
+            },
+          ]
+        : [
+            {
+              id: "ord_1",
+              status: "paid",
+              payment_signature: "sig_1",
+              payment_amount_base_units: "730000",
+              payment_slot: "123",
+              vendor_order_id: "adv_1",
+              created_at: new Date("2026-08-01T12:00:00.000Z"),
+              updated_at: new Date("2026-08-01T12:05:00.000Z"),
+            },
+          ],
+    );
+
+    const view = await readOrderStatus(executor, "ord_1");
+
+    expect(view?.orderId).toBe("ord_1");
+    expect(view?.status).toBe("paid");
+    expect(view?.paymentAmountBaseUnits).toBe(730_000n);
+    expect(view?.paymentSlot).toBe(123);
+    expect(view?.events.map((event) => event.status)).toEqual([
+      "pending-payment",
+      "paid",
+    ]);
+    expect(view?.events[1]?.occurredAt).toEqual(new Date("2026-08-01T12:05:00.000Z"));
+    expect(executor.queries[0]?.params).toEqual(["ord_1"]);
+    expect(lastQuery(executor).text).toContain("FROM order_status_events");
+  });
+
+  it("returns undefined for an unknown order without reading events", async () => {
+    const executor = createFakeExecutor(() => []);
+
+    await expect(readOrderStatus(executor, "ord_missing")).resolves.toBeUndefined();
+    expect(executor.queries).toHaveLength(1);
   });
 });
 

@@ -1,9 +1,50 @@
 import { describe, expect, it } from "vitest";
+import { ZodError } from "zod";
 import {
   createPostgresWebhookSubscriptionLookup,
+  createWebhookSubscription,
   WebhookSubscriptionNotFoundError,
 } from "./subscriptions.js";
 import { createFakeExecutor, lastQuery } from "./test-utils.js";
+
+describe("createWebhookSubscription", () => {
+  it("inserts the subscription row for the order", async () => {
+    const executor = createFakeExecutor();
+
+    await createWebhookSubscription(executor, {
+      id: "sub_1",
+      internalOrderId: "ord_1",
+      targetUrl: "https://agent.example.com/hooks/advertek",
+      signingSecretReference: "AGENT_WEBHOOK_SIGNING_SECRET",
+    });
+
+    const query = lastQuery(executor);
+    expect(query.text).toContain("INSERT INTO webhook_subscriptions");
+    expect(query.text).toContain(
+      "(id, internal_order_id, target_url, signing_secret_reference)",
+    );
+    expect(query.params).toEqual([
+      "sub_1",
+      "ord_1",
+      "https://agent.example.com/hooks/advertek",
+      "AGENT_WEBHOOK_SIGNING_SECRET",
+    ]);
+  });
+
+  it("rejects a non-URL target before touching the database", async () => {
+    const executor = createFakeExecutor();
+
+    await expect(
+      createWebhookSubscription(executor, {
+        id: "sub_1",
+        internalOrderId: "ord_1",
+        targetUrl: "not-a-url",
+        signingSecretReference: "AGENT_WEBHOOK_SIGNING_SECRET",
+      }),
+    ).rejects.toBeInstanceOf(ZodError);
+    expect(executor.queries).toHaveLength(0);
+  });
+});
 
 describe("createPostgresWebhookSubscriptionLookup", () => {
   it("maps the stored row to a WebhookSubscription", async () => {
