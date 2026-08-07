@@ -297,9 +297,6 @@ export default function Whitepaper() {
                 <a href="/" className="nav-link" style={{ opacity: 0.9 }}>
                   Home
                 </a>
-                <a href="/#deck" className="nav-link" style={{ opacity: 0.9 }}>
-                  Deck
-                </a>
                 <a href="/#contact" className="nav-link" style={{ opacity: 0.9 }}>
                   Contact
                 </a>
@@ -910,10 +907,7 @@ export default function Whitepaper() {
                     Advertek Agent Rail — Whitepaper
                   </p>
                   <div className="flex items-center gap-5 font-mono text-xs tracking-widest uppercase">
-                    <a href="/#deck" style={{ color: ACCENT, textUnderlineOffset: "3px" }}>
-                      View the deck
-                    </a>
-                    <a href="/#contact" style={{ color: t.mid, textUnderlineOffset: "3px" }}>
+                    <a href="/#contact" style={{ color: ACCENT, textUnderlineOffset: "3px" }}>
                       Request access
                     </a>
                   </div>

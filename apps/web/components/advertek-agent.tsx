@@ -5,7 +5,6 @@ import { Moon, Sun } from "lucide-react";
 import { RailAccessForm } from "./rail-access-form";
 import { ACCENT, SOLANA_GRAD, themes, type Theme, type ThemeMode } from "./theme";
 import { AdvertekMark, RegMark } from "./icons";
-import { DeckViewer } from "./deck-viewer";
 import { IntegrationExplorer } from "./integration-explorer";
 
 const payloadLines: readonly string[] = [
@@ -206,7 +205,6 @@ export default function AdvertekAgent() {
                 <a href="#rail" className="nav-link" style={{ opacity: 0.9 }}>Rail</a>
                 <a href="#capabilities" className="nav-link" style={{ opacity: 0.9 }}>Capabilities</a>
                 <a href="#integration" className="nav-link" style={{ opacity: 0.9 }}>API</a>
-                <a href="#deck" className="nav-link" style={{ opacity: 0.9 }}>Deck</a>
                 <a href="/whitepaper" className="nav-link" style={{ opacity: 0.9 }}>Whitepaper</a>
                 <a href="#contact" className="nav-link" style={{ opacity: 0.9 }}>Contact</a>
               </nav>
@@ -499,24 +497,6 @@ export default function AdvertekAgent() {
             <div className="rounded-xl p-6 md:p-8" style={glassCard}>
               <IntegrationExplorer theme={t} />
             </div>
-          </div>
-        </section>
-
-        {/* PITCH DECK */}
-        <section id="deck" style={{ backgroundColor: t.panel, borderTop: `1px solid ${t.line}` }}>
-          <div className="max-w-6xl mx-auto px-6 py-24">
-            <SectionHeading eyebrow="The pitch" title="Ten slides, if you want the whole story" theme={t} />
-            <DeckViewer theme={t} />
-            <p className="mt-8 text-sm" style={{ color: t.mid }}>
-              Prefer prose?{" "}
-              <a
-                href="/whitepaper"
-                className="font-mono text-xs tracking-widest uppercase underline"
-                style={{ color: ACCENT, textUnderlineOffset: "3px" }}
-              >
-                Read the whitepaper
-              </a>
-            </p>
           </div>
         </section>
 
