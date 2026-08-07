@@ -146,11 +146,17 @@ export default function AdvertekAgent() {
     "--pulse-color": "rgba(20,241,149,0.45)",
   } as CSSProperties;
 
-  const glassCard: CSSProperties = {
+  // Border-less base so callers can apply either the `border` shorthand or
+  // per-side longhands without mixing the two in one style object (which
+  // triggers React's "updating a style property during rerender" warning).
+  const glassBase: CSSProperties = {
     backgroundColor: t.cardBg,
-    border: `1px solid ${t.cardBorder}`,
     backdropFilter: "blur(6px)",
     WebkitBackdropFilter: "blur(6px)",
+  };
+  const glassCard: CSSProperties = {
+    ...glassBase,
+    border: `1px solid ${t.cardBorder}`,
   };
 
   return (
@@ -400,8 +406,11 @@ export default function AdvertekAgent() {
                   key={s.n}
                   className={`lift rounded-lg p-5 ${s.onChain ? "grad-border" : ""}`}
                   style={{
-                    ...glassCard,
+                    ...glassBase,
                     borderTop: s.onChain ? `1px solid ${t.cardBorder}` : `2px solid ${ACCENT}`,
+                    borderRight: `1px solid ${t.cardBorder}`,
+                    borderBottom: `1px solid ${t.cardBorder}`,
+                    borderLeft: `1px solid ${t.cardBorder}`,
                   }}
                 >
                   <div className="flex items-center justify-between mb-3">
@@ -455,7 +464,7 @@ export default function AdvertekAgent() {
                   <div
                     className={`flex-1 p-5 rounded-lg ${item.onChain ? "grad-border" : ""}`}
                     style={{
-                      ...glassCard,
+                      ...glassBase,
                       border: item.onChain ? `1px solid transparent` : `1px solid ${t.cardBorder}`,
                     }}
                   >
