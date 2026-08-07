@@ -45,7 +45,6 @@ export class UnknownSkuError extends Error {
 }
 
 export interface CreateSkuQuoteDeps {
-  /** @blocker STEP_11 — replace mock with real SpotRateClient */
   readonly spotRateClient: SpotRateClient;
   readonly now?: () => Date;
 }

@@ -23,6 +23,7 @@
   },
   "dependencies": {
     "@advertek/catalog": "workspace:*",
+    "@advertek/fulfillment": "workspace:*",
     "@advertek/quote-api": "workspace:*",
     "@advertek/types": "workspace:*",
     "@modelcontextprotocol/sdk": "1.26.0",

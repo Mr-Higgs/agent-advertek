@@ -1,10 +1,7 @@
 /**
- * Spot FX lookup for converting CAD prices to USDC.
- * Implementations should fetch a live rate; do not hardcode rates in
- * quote business logic.
- *
- * @blocker STEP_11 — Stub only. Requires a real CAD→USDC spot-rate
- * integration before Step 11. Do not ship production quotes on mocks.
+ * Spot FX lookup for converting CAD prices to USDC. The production
+ * implementation is `createHttpSpotRateClient` (`http-clients.ts`); never
+ * hardcode rates in quote business logic.
  */
 export interface SpotRateClient {
   /**

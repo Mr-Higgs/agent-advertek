@@ -1,5 +1,6 @@
 import { registerAdvertekTools } from "@advertek/mcp-server";
 import { createMcpHandler } from "mcp-handler";
+import { guardApiRequest } from "@/lib/api-guard";
 import { createQuoteExecutors } from "@/lib/quotes";
 
 export const runtime = "nodejs";
@@ -11,9 +12,8 @@ export const maxDuration = 60;
  * `registerAdvertekTools` registration, so both transports serve identical
  * behavior; tool descriptions remain the agent's only documentation.
  *
- * @blocker STEP_11 — quote pricing runs on the shared mocked wiring in
- * `lib/quotes.ts` until real AdvertekPricingClient / SpotRateClient
- * integrations land.
+ * Pricing follows the config-gated wiring in `lib/quotes.ts`: real upstreams
+ * when provisioned, inspection mocks otherwise.
  */
 const handler = createMcpHandler(
   (server) => {
@@ -23,4 +23,12 @@ const handler = createMcpHandler(
   { basePath: "/api" },
 );
 
-export { handler as GET, handler as POST, handler as DELETE };
+async function guardedHandler(request: Request): Promise<Response> {
+  return guardApiRequest(request, "mcp") ?? (await handler(request));
+}
+
+export {
+  guardedHandler as GET,
+  guardedHandler as POST,
+  guardedHandler as DELETE,
+};

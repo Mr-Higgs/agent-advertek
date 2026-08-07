@@ -97,9 +97,8 @@ export interface ConfirmedOrderPayment {
 }
 
 /**
- * @blocker STEP_9 — order-status persistence isn't implemented yet. This is
- * the seam Step 9 fills in with a real implementation (e.g. backed by a
- * database). Until then, callers must inject their own (mocked in tests).
+ * Order-status persistence seam. `@advertek/db` provides the Postgres
+ * implementation; tests inject their own fake.
  */
 export interface OrderStatusUpdater {
   updateOrderStatus(

@@ -216,13 +216,17 @@ reconciliation stay isolated until volumes justify unifying.
 
 Marked `@blocker` in code:
 
-- **`STEP_11` — pricing is partially fabricated.** `AdvertekPricingClient`
-  and `SpotRateClient` are interfaces whose only implementations are mocks in
-  `stdio-main.ts`. `get_quote` prices are not real; `get_sku_quote` CAD prices
-  are real (checked-in POD list) but the CAD→USDC rate is not.
-- **`STEP_9` — no order persistence.** `OrderStatusUpdater`,
-  `OrderDetailsLookup`, `WebhookSubscriptionLookup` are empty seams;
-  `SweepLedger` is in-memory only.
+- **Pricing upstreams are deployment-gated, not missing.**
+  `createHttpAdvertekPricingClient` / `createHttpSpotRateClient` are the
+  production implementations; `apps/web` uses them when
+  `ADVERTEK_PRICING_API_URL` / `SPOT_RATE_API_URL` are provisioned and falls
+  back to fixed inspection mocks otherwise (the UI then labels figures as
+  demo pricing). The expected upstream response contracts are asserted in
+  `packages/quote-api/src/http-clients.test.ts` and need confirming against
+  the real vendor specs.
+- **Rate limiting is per-instance.** The limiter in `apps/web/lib/rate-limit.ts`
+  counts within one serverless instance; a global limit needs a shared store
+  (e.g. Upstash Redis).
 
 ## 11. Open Decisions
 
@@ -233,8 +237,8 @@ Marked `@blocker` in code:
 
 ## 12. Roadmap
 
-1. **Now** — close the baseline stubs: real `AdvertekPricingClient` /
-   `SpotRateClient` (STEP_11), order persistence (STEP_9).
+1. **Now** — point the pricing/spot-rate clients at the real upstreams and
+   provision their credentials; move rate limiting to a shared store.
 2. **Next** — extract the `PaymentRail` interface from the existing Solana
    code (pure refactor, no behavior change); the Solana USDC flow becomes the
    reference adapter.

@@ -48,7 +48,7 @@ Solana + QuickNode; fiat off-ramp stays on OKX.
   behind an injected `SqlExecutor` seam — chosen over an ORM so unit tests
   use recording fakes and never touch a database (repo convention). Money
   columns are `numeric(78, 0)` crossed as base-10 strings, never float.
-- Implements the former `STEP_9` seams: `OrderStatusUpdater`,
+- Implements the order-persistence seams: `OrderStatusUpdater`,
   `OrderDetailsLookup`, `WebhookSubscriptionLookup`, processed-deliveries
   table, and a Postgres `SweepLedger`.
 - Supabase Realtime/Auth are optional add-ons for the operator dashboard.
@@ -103,6 +103,7 @@ Solana + QuickNode; fiat off-ramp stays on OKX.
   Streams), sweeping runs in the dedicated worker.
 - **Secret sprawl control.** Consolidating on Vercel must not pull signing
   keys into the web environment; the worker is the only key-bearing process.
-- **`STEP_11` (fabricated pricing/rates) is orthogonal.** Real
-  `AdvertekPricingClient` / `SpotRateClient` implementations are still
-  required regardless of this topology.
+- **Pricing upstreams are orthogonal to the topology.** The HTTP
+  `AdvertekPricingClient` / `SpotRateClient` implementations ship in
+  `@advertek/quote-api`; whether they are active is purely a matter of which
+  endpoints/credentials the deployment provisions.

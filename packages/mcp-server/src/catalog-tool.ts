@@ -127,8 +127,6 @@ export interface BuildCatalogToolResultDeps {
    * round trip per SKU. Always call get_sku_quote / get_quote to lock in
    * the exact amount before paying — spot rates move between browse and
    * checkout.
-   *
-   * @blocker STEP_11 — Stub only, see @advertek/quote-api's SpotRateClient.
    */
   readonly spotRateClient: SpotRateClient;
 }

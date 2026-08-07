@@ -113,6 +113,99 @@ export interface OrderRow {
   readonly updated_at: Date;
 }
 
+export interface OrderStatusEventView {
+  readonly status: string;
+  readonly occurredAt: Date;
+  readonly recordedAt: Date;
+}
+
+/** An order row plus its full agent-facing status timeline. */
+export interface OrderStatusView {
+  readonly orderId: string;
+  readonly status: string;
+  readonly paymentSignature: string | null;
+  readonly paymentAmountBaseUnits: bigint | null;
+  readonly paymentSlot: number | null;
+  readonly vendorOrderId: string | null;
+  readonly createdAt: Date;
+  readonly updatedAt: Date;
+  readonly events: readonly OrderStatusEventView[];
+}
+
+interface StatusEventRow {
+  readonly status: string;
+  readonly occurred_at: Date | string;
+  readonly recorded_at: Date | string;
+}
+
+/**
+ * Driver-shaped view of {@link OrderRow}: `numeric`/`bigint` columns arrive as
+ * strings from postgres.js, timestamps as `Date`.
+ */
+interface OrderStatusRow {
+  readonly id: string;
+  readonly status: string;
+  readonly payment_signature: string | null;
+  readonly payment_amount_base_units: string | null;
+  readonly payment_slot: string | number | null;
+  readonly vendor_order_id: string | null;
+  readonly created_at: Date | string;
+  readonly updated_at: Date | string;
+}
+
+function toDate(value: Date | string): Date {
+  return value instanceof Date ? value : new Date(value);
+}
+
+/**
+ * Reads an order's current status and its `order_status_events` timeline
+ * (oldest first). Returns `undefined` for an unknown order id so callers can
+ * answer 404 without catching.
+ */
+export async function readOrderStatus(
+  executor: SqlExecutor,
+  orderId: string,
+): Promise<OrderStatusView | undefined> {
+  const rows = await executor.query<OrderStatusRow>(
+    `SELECT id, status, payment_signature, payment_amount_base_units, payment_slot,
+            vendor_order_id, created_at, updated_at
+     FROM orders
+     WHERE id = $1`,
+    [orderId],
+  );
+  const order = rows[0];
+  if (!order) {
+    return undefined;
+  }
+
+  const events = await executor.query<StatusEventRow>(
+    `SELECT status, occurred_at, recorded_at
+     FROM order_status_events
+     WHERE order_id = $1
+     ORDER BY occurred_at ASC, id ASC`,
+    [orderId],
+  );
+
+  return {
+    orderId: order.id,
+    status: order.status,
+    paymentSignature: order.payment_signature,
+    paymentAmountBaseUnits:
+      order.payment_amount_base_units === null
+        ? null
+        : BigInt(order.payment_amount_base_units),
+    paymentSlot: order.payment_slot === null ? null : Number(order.payment_slot),
+    vendorOrderId: order.vendor_order_id,
+    createdAt: toDate(order.created_at),
+    updatedAt: toDate(order.updated_at),
+    events: events.map((event) => ({
+      status: event.status,
+      occurredAt: toDate(event.occurred_at),
+      recordedAt: toDate(event.recorded_at),
+    })),
+  };
+}
+
 /** Reads the decoded fulfillment payload for an order, or `undefined`. */
 export async function readFulfillmentInput(
   executor: SqlExecutor,
