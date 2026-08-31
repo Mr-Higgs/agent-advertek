@@ -255,9 +255,9 @@ export function IntegrationExplorer({ theme: t }: IntegrationExplorerProps) {
       {catalog?.demoPricing !== false && (
         <div
           className="font-mono text-xs leading-relaxed p-4 mb-8"
-          style={{ border: `1px solid ${ACCENT}`, color: t.text }}
+          style={{ border: `1px solid ${t.accent}`, color: t.text }}
         >
-          <span style={{ color: ACCENT }}>DEMO PRICING —</span> every CAD and USDC figure
+          <span style={{ color: t.accent }}>DEMO PRICING —</span> every CAD and USDC figure
           below is non-binding. Quote pricing runs on mocked pricing and spot-rate
           wiring. Nothing here creates an order, takes payment, or settles funds.
         </div>
@@ -269,7 +269,7 @@ export function IntegrationExplorer({ theme: t }: IntegrationExplorerProps) {
           onClick={loadCatalog}
           disabled={catalogState.status === "loading"}
           className="font-mono text-xs tracking-widest uppercase px-6 py-3 disabled:opacity-50"
-          style={{ backgroundColor: ACCENT, color: "#FFFFFF" }}
+          style={{ backgroundColor: t.accent, color: t.accentContrast }}
         >
           {catalogState.status === "loading"
             ? "Connecting…"
@@ -283,7 +283,7 @@ export function IntegrationExplorer({ theme: t }: IntegrationExplorerProps) {
       </div>
 
       {catalogState.status === "error" && (
-        <p className="text-sm mb-8" style={{ color: ACCENT }}>
+        <p className="text-sm mb-8" style={{ color: t.accent }}>
           {catalogState.message}
         </p>
       )}
@@ -439,7 +439,7 @@ export function IntegrationExplorer({ theme: t }: IntegrationExplorerProps) {
               type="submit"
               disabled={quoteState.status === "submitting"}
               className="font-mono text-xs tracking-widest uppercase px-6 py-3 mt-6 disabled:opacity-50"
-              style={{ border: `1px solid ${ACCENT}`, color: t.text }}
+              style={{ border: `1px solid ${t.accent}`, color: t.text }}
             >
               {quoteState.status === "submitting" ? "Pricing…" : "Get demo quote"}
             </button>
@@ -454,7 +454,7 @@ export function IntegrationExplorer({ theme: t }: IntegrationExplorerProps) {
             </div>
           )}
           {quoteState.status === "error" && (
-            <p className="text-sm mt-6" style={{ color: ACCENT }}>
+            <p className="text-sm mt-6" style={{ color: t.accent }}>
               {quoteState.message}
             </p>
           )}
@@ -467,7 +467,7 @@ export function IntegrationExplorer({ theme: t }: IntegrationExplorerProps) {
           <div className="grid grid-cols-1 gap-6 mb-10">
             {MCP_TOOLS.map((tool) => (
               <div key={tool.name} className="pt-4" style={{ borderTop: `1px solid ${t.line}` }}>
-                <div className="font-mono text-sm mb-1" style={{ color: ACCENT }}>
+                <div className="font-mono text-sm mb-1" style={{ color: t.accent }}>
                   {tool.name}
                 </div>
                 <div className="text-sm mb-1">{tool.title}</div>

@@ -14,62 +14,73 @@ export interface Theme {
   readonly ticketLine: string;
   readonly payloadBg: string;
   readonly payloadText: string;
-  /** Translucent glass fill for elevated cards, layered over `bg`. */
+  /** Translucent fill for elevated cards, layered over `bg`. */
   readonly cardBg: string;
-  /** Hairline border for glass cards, tuned per mode. */
+  /** Hairline border for cards, tuned per mode. */
   readonly cardBorder: string;
-  /** Faint accent wash used for chips and highlighted surfaces. */
+  /** Faint ink wash used for chips and highlighted surfaces. */
   readonly accentSoft: string;
-  /** Radial glow color bloomed behind the hero and CTAs. */
+  /** Legacy glow slot — transparent in the mono system, kept so shadows collapse quietly. */
   readonly glow: string;
+  /** Solid ink: buttons, emphasis. Black on paper, white on ink. */
+  readonly accent: string;
+  /** Text/foreground set against `accent`. */
+  readonly accentContrast: string;
 }
 
-/** Brand red and navy — fixed across both theme modes, sampled from the Advertek Agent mark. */
-export const ACCENT = "#DD1E36";
-export const NAVY = "#1B4388";
+/**
+ * Mono identity: the site is ink on paper. Both constants resolve to ink so
+ * the mark and registration glyphs print solid black (inverted on dark).
+ */
+export const ACCENT = "#0A0A0A";
+export const NAVY = "#0A0A0A";
 
-/** Solana brand gradient — reserved for on-chain / settlement moments only. */
-export const SOLANA_START = "#9945FF";
-export const SOLANA_END = "#14F195";
-export const SOLANA_GRAD = `linear-gradient(100deg, ${SOLANA_START} 0%, #19FB9B 55%, ${SOLANA_END} 100%)`;
+/** On-chain / settlement moments: struck as quiet gray, no longer a brand gradient. */
+export const SOLANA_START = "#666666";
+export const SOLANA_END = "#999999";
+export const SOLANA_GRAD = `linear-gradient(100deg, ${SOLANA_START} 0%, #7F7F7F 55%, ${SOLANA_END} 100%)`;
 
 export const themes: Record<ThemeMode, Theme> = {
-  dark: {
-    bg: "#060910",
-    panel: "#0B1220",
-    panelDeep: "#04070D",
-    text: "#EEF2F9",
-    mid: "#93A1BC",
-    midStrong: "#C3CEE2",
-    line: "#1A2438",
-    ticketBg: "#F4F7FC",
-    ticketText: "#0B1220",
-    ticketMid: "#5C6B85",
-    ticketLine: "#DCE3EF",
-    payloadBg: "#04070D",
-    payloadText: "#E7ECF5",
-    cardBg: "rgba(255,255,255,0.03)",
-    cardBorder: "rgba(255,255,255,0.09)",
-    accentSoft: "rgba(221,30,54,0.14)",
-    glow: "rgba(221,30,54,0.28)",
-  },
   light: {
     bg: "#FFFFFF",
-    panel: "#F5F7FB",
-    panelDeep: "#0B1220",
-    text: "#0B1220",
-    mid: "#55627A",
-    midStrong: "#33455F",
-    line: "#E2E8F2",
+    panel: "#FAFAFA",
+    panelDeep: "#0A0A0A",
+    text: "#0A0A0A",
+    mid: "#6B6B6B",
+    midStrong: "#3D3D3D",
+    line: "#E5E5E5",
     ticketBg: "#FFFFFF",
-    ticketText: "#0B1220",
-    ticketMid: "#5C6B85",
-    ticketLine: "#E2E8F2",
-    payloadBg: "#0B1220",
-    payloadText: "#EEF2F9",
-    cardBg: "rgba(11,18,32,0.02)",
-    cardBorder: "rgba(11,18,32,0.10)",
-    accentSoft: "rgba(221,30,54,0.08)",
-    glow: "rgba(221,30,54,0.12)",
+    ticketText: "#0A0A0A",
+    ticketMid: "#6B6B6B",
+    ticketLine: "#E5E5E5",
+    payloadBg: "#0A0A0A",
+    payloadText: "#F2F2F2",
+    cardBg: "rgba(0,0,0,0.02)",
+    cardBorder: "rgba(0,0,0,0.12)",
+    accentSoft: "rgba(0,0,0,0.05)",
+    glow: "transparent",
+    accent: "#000000",
+    accentContrast: "#FFFFFF",
+  },
+  dark: {
+    bg: "#0A0A0A",
+    panel: "#141414",
+    panelDeep: "#000000",
+    text: "#F2F2F2",
+    mid: "#8C8C8C",
+    midStrong: "#C4C4C4",
+    line: "#262626",
+    ticketBg: "#F5F5F3",
+    ticketText: "#0A0A0A",
+    ticketMid: "#6B6B6B",
+    ticketLine: "#DDDDDA",
+    payloadBg: "#000000",
+    payloadText: "#EDEDEB",
+    cardBg: "rgba(255,255,255,0.03)",
+    cardBorder: "rgba(255,255,255,0.14)",
+    accentSoft: "rgba(255,255,255,0.06)",
+    glow: "transparent",
+    accent: "#FFFFFF",
+    accentContrast: "#0A0A0A",
   },
 };

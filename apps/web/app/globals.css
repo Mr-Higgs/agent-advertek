@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 :root {
-  color-scheme: dark;
+  color-scheme: light;
 }
 
 html {
@@ -9,14 +9,18 @@ html {
 }
 
 body {
-  background: #060910;
+  background: #ffffff;
   font-family: var(--font-sans), "IBM Plex Sans", system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
 
 .font-display {
-  font-family: var(--font-display), "Big Shoulders Display", sans-serif;
+  font-family: var(--font-display), "Archivo", sans-serif;
+}
+
+.font-serif {
+  font-family: var(--font-serif), "Instrument Serif", Georgia, serif;
 }
 
 .font-mono {
@@ -33,7 +37,8 @@ button {
 a:focus-visible,
 button:focus-visible,
 select:focus-visible,
-input:focus-visible {
+input:focus-visible,
+textarea:focus-visible {
   outline: 1px solid currentColor;
   outline-offset: 3px;
 }
@@ -47,8 +52,8 @@ input:focus-visible {
   left: 0;
   right: 0;
   bottom: -6px;
-  height: 2px;
-  background: var(--accent, #dd1e36);
+  height: 1px;
+  background: currentColor;
   transform: scaleX(0);
   transform-origin: left;
   transition: transform 0.2s ease;
@@ -79,18 +84,49 @@ input:focus-visible {
   transform: translateX(0);
 }
 
-/* --- Premium surface + decoration utilities --- */
+/* Chat messages settle in like a line of set type. */
+.msg-in {
+  animation: msg-in 0.3s ease both;
+}
+@keyframes msg-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Three-dot thinking indicator for the concierge. */
+.think-dot {
+  animation: think 1.2s ease-in-out infinite;
+}
+.think-dot:nth-child(2) {
+  animation-delay: 0.15s;
+}
+.think-dot:nth-child(3) {
+  animation-delay: 0.3s;
+}
+@keyframes think {
+  0%,
+  60%,
+  100% {
+    opacity: 0.25;
+  }
+  30% {
+    opacity: 1;
+  }
+}
+
+/* --- Surface + decoration utilities --- */
 .grid-bg {
   background-image: linear-gradient(var(--grid-line) 1px, transparent 1px),
     linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
   background-size: 64px 64px;
   -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 40%, transparent 100%);
   mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 40%, transparent 100%);
-}
-
-.hero-glow {
-  filter: blur(90px);
-  border-radius: 9999px;
 }
 
 .grad-text {
@@ -129,7 +165,7 @@ input:focus-visible {
   0%,
   100% {
     opacity: 1;
-    box-shadow: 0 0 0 0 var(--pulse-color, rgba(20, 241, 149, 0.5));
+    box-shadow: 0 0 0 0 var(--pulse-color, rgba(0, 0, 0, 0.3));
   }
   50% {
     opacity: 0.65;
@@ -140,31 +176,20 @@ input:focus-visible {
   animation: pulse-dot 2s ease-in-out infinite;
 }
 
-@keyframes shimmer {
-  0% {
-    background-position: 0% 50%;
-  }
-  100% {
-    background-position: 200% 50%;
-  }
-}
-.shimmer {
-  background-size: 200% 100%;
-  animation: shimmer 6s linear infinite;
-}
-
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
   }
   .stamp-in,
-  .payload-line {
+  .payload-line,
+  .msg-in {
     transition: none !important;
+    animation: none !important;
     opacity: 1 !important;
     transform: none !important;
   }
   .pulse-dot,
-  .shimmer {
+  .think-dot {
     animation: none !important;
   }
 }

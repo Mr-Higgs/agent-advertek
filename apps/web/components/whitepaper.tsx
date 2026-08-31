@@ -2,7 +2,7 @@
 
 import { useState, type CSSProperties, type ReactNode } from "react";
 import { Moon, Sun } from "lucide-react";
-import { ACCENT, SOLANA_GRAD, themes, type Theme, type ThemeMode } from "./theme";
+import { SOLANA_GRAD, themes, type Theme, type ThemeMode } from "./theme";
 import { AdvertekMark } from "./icons";
 
 interface TocEntry {
@@ -199,7 +199,7 @@ function SectionHeading({ n, eyebrow, title, theme: t }: SectionHeadingProps) {
   return (
     <header className="mb-10">
       <div className="flex items-baseline gap-3 mb-3">
-        <span className="font-mono text-xs tracking-widest" style={{ color: ACCENT }}>
+        <span className="font-mono text-xs tracking-widest" style={{ color: t.accent }}>
           {n}
         </span>
         <span className="font-mono text-xs tracking-widest uppercase" style={{ color: t.mid }}>
@@ -235,7 +235,7 @@ function Prose({ children, theme: t }: ProseProps) {
 }
 
 export default function Whitepaper() {
-  const [mode, setMode] = useState<ThemeMode>("dark");
+  const [mode, setMode] = useState<ThemeMode>("light");
   const t = themes[mode];
   const isDark = mode === "dark";
 
@@ -257,10 +257,6 @@ export default function Whitepaper() {
     <div className="relative w-full min-h-screen" style={rootStyle}>
       <div aria-hidden className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
         <div className="grid-bg absolute inset-0" style={{ opacity: isDark ? 0.4 : 0.3 }} />
-        <div
-          className="hero-glow absolute"
-          style={{ width: 480, height: 480, top: -180, left: "8%", background: t.glow }}
-        />
       </div>
 
       <div className="relative z-10">
@@ -282,7 +278,7 @@ export default function Whitepaper() {
                 </span>
                 <span
                   className="font-mono block"
-                  style={{ color: ACCENT, fontSize: "0.55rem", letterSpacing: "0.2em" }}
+                  style={{ color: t.accent, fontSize: "0.55rem", letterSpacing: "0.2em" }}
                 >
                   Whitepaper
                 </span>
@@ -297,7 +293,7 @@ export default function Whitepaper() {
                 <a href="/" className="nav-link" style={{ opacity: 0.9 }}>
                   Home
                 </a>
-                <a href="/#contact" className="nav-link" style={{ opacity: 0.9 }}>
+                <a href="/rail#contact" className="nav-link" style={{ opacity: 0.9 }}>
                   Contact
                 </a>
               </nav>
@@ -347,7 +343,7 @@ export default function Whitepaper() {
           <div className="grid grid-cols-1 lg:grid-cols-[220px_minmax(0,1fr)] gap-12 items-start">
             {/* TOC */}
             <aside className="lg:sticky lg:top-24">
-              <div className="font-mono text-xs tracking-widest uppercase mb-4" style={{ color: ACCENT }}>
+              <div className="font-mono text-xs tracking-widest uppercase mb-4" style={{ color: t.accent }}>
                 Contents
               </div>
               <nav aria-label="Whitepaper table of contents">
@@ -359,7 +355,7 @@ export default function Whitepaper() {
                         className="flex items-baseline gap-2 font-mono text-xs tracking-wide nav-link"
                         style={{ color: t.mid, textDecoration: "none" }}
                       >
-                        <span style={{ color: ACCENT, opacity: 0.7 }}>{entry.n}</span>
+                        <span style={{ color: t.accent, opacity: 0.7 }}>{entry.n}</span>
                         <span>{entry.label}</span>
                       </a>
                     </li>
@@ -431,7 +427,7 @@ export default function Whitepaper() {
                       <div className="font-display uppercase mb-1" style={{ fontWeight: 700, fontSize: "1.35rem" }}>
                         {p.name}
                       </div>
-                      <div className="font-mono text-xs tracking-widest uppercase mb-3" style={{ color: ACCENT }}>
+                      <div className="font-mono text-xs tracking-widest uppercase mb-3" style={{ color: t.accent }}>
                         {p.org}
                       </div>
                       <p className="text-sm leading-relaxed" style={{ color: t.mid }}>
@@ -442,7 +438,7 @@ export default function Whitepaper() {
                 </div>
                 <div
                   className="rounded-lg p-5"
-                  style={{ ...glassCard, borderLeft: `3px solid ${ACCENT}` }}
+                  style={{ ...glassCard, borderLeft: `3px solid ${t.accent}` }}
                 >
                   <p className="text-sm leading-relaxed" style={{ color: t.midStrong }}>
                     This is a land grab, not a slow build. The category has no leader yet because
@@ -476,7 +472,7 @@ export default function Whitepaper() {
                 <div className="space-y-3 mb-8">
                   {mcpTools.map((tool) => (
                     <div key={tool.name} className="rounded-lg px-5 py-4" style={glassCard}>
-                      <code className="font-mono text-sm" style={{ color: ACCENT }}>
+                      <code className="font-mono text-sm" style={{ color: t.accent }}>
                         {tool.name}
                       </code>
                       <p className="text-sm mt-2 leading-relaxed" style={{ color: t.mid }}>
@@ -589,7 +585,7 @@ export default function Whitepaper() {
                 <div className="rounded-xl p-6" style={{ ...glassCard, backgroundColor: t.payloadBg }}>
                   <div
                     className="font-mono text-xs tracking-widest uppercase mb-4"
-                    style={{ color: "#14F195" }}
+                    style={{ color: t.payloadText }}
                   >
                     Lifecycle figure
                   </div>
@@ -802,7 +798,7 @@ export default function Whitepaper() {
                           {w.note}
                         </div>
                       </div>
-                      <div className="font-mono text-xs tracking-wide shrink-0" style={{ color: ACCENT }}>
+                      <div className="font-mono text-xs tracking-wide shrink-0" style={{ color: t.accent }}>
                         {w.stat}
                       </div>
                     </div>
@@ -833,7 +829,7 @@ export default function Whitepaper() {
                       color: t.payloadText,
                     }}
                   >
-                    <div className="font-mono text-xs tracking-widest uppercase mb-2" style={{ color: ACCENT }}>
+                    <div className="font-mono text-xs tracking-widest uppercase mb-2" style={{ color: t.accent }}>
                       Agent-facing — the moat
                     </div>
                     <div className="font-display uppercase mb-3" style={{ fontWeight: 700, fontSize: "1.25rem" }}>
@@ -882,7 +878,7 @@ export default function Whitepaper() {
                     },
                   ].map((card) => (
                     <div key={card.phase} className="rounded-lg p-5" style={glassCard}>
-                      <div className="font-mono text-xs tracking-widest uppercase mb-2" style={{ color: ACCENT }}>
+                      <div className="font-mono text-xs tracking-widest uppercase mb-2" style={{ color: t.accent }}>
                         {card.phase}
                       </div>
                       <div className="font-mono text-sm mb-2" style={{ color: t.text }}>
@@ -907,7 +903,7 @@ export default function Whitepaper() {
                     Advertek Agent Rail — Whitepaper
                   </p>
                   <div className="flex items-center gap-5 font-mono text-xs tracking-widest uppercase">
-                    <a href="/#contact" style={{ color: ACCENT, textUnderlineOffset: "3px" }}>
+                    <a href="/rail#contact" style={{ color: t.accent, textUnderlineOffset: "3px" }}>
                       Request access
                     </a>
                   </div>

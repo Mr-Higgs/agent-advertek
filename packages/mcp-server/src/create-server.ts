@@ -40,6 +40,23 @@ export interface AdvertekMcpServerDeps {
   readonly executeCreateOrder: CreateOrderExecutor;
 }
 
+/**
+ * Agent-facing tool descriptions — the only documentation calling agents ever
+ * see, deliberately verbose. Shared verbatim by every transport that exposes
+ * these tools (stdio MCP, remote MCP, the web chat agent) so no surface
+ * drifts from another.
+ */
+export const ADVERTEK_TOOL_GUIDANCE = {
+  get_catalog:
+    "Return Advertek's available print product lines and the exact SKU specification fields required to request a quote, plus every fixed-price print-on-demand SKU available today with its cost. Advertek is a commercial printer. Call this first when you do not already know which productLine values are valid, what units dimensions use, which finish/turnaround enums are accepted, or which POD SKUs and prices are currently available. The response is structured JSON (not prose): provider metadata, currency encoding notes, specRequirements, productLines with ids you must pass to get_quote, and a skuCatalog of fixed-price print-on-demand products (mugs, t-shirts, canvas, etc.) — each with its MSRP in CAD cents and a live (non-binding) USDC estimate — that you can quote exactly and order with get_sku_quote.",
+  get_quote:
+    "Validate a complete Advertek SKU specification and return a real-time production quote. Advertek prices jobs in CAD and settles in USDC. Pass the full SKU spec object (productLine, dimensions in mm, stock, finish[], quantity, turnaround). If you are unsure of allowed enums or required fields, call get_catalog first. On success, returns structured quote data with CAD cents and USDC base units as decimal strings. On validation or pricing failure, returns structured error details with ok=false — do not invent prices.",
+  get_sku_quote:
+    'Beta shortcut for Advertek\'s print-on-demand catalog: pass a raw SKU code and quantity — no full SKU specification needed. Call get_catalog first and use one of the codes in its skuCatalog (e.g. "MUG-11-WHT"). Returns real MSRP pricing in CAD cents plus the USDC-equivalent settlement amount. On an unknown SKU or invalid input, returns structured error details with ok=false — do not invent prices or SKU codes.',
+  create_order:
+    "Place a real Advertek print order and receive the payment request that makes it payable. Pass the full order (customerOrderNumber, locationCode, shippingService, soldTo/shipTo addresses, and items — each with an internalItemId, a complete SKU spec exactly as get_quote accepts, and customsValueUsdCents as an integer string of US cents), the base58 Solana public key of the wallet that will pay, and optionally an https callbackUrl to receive signed order-status webhooks. Advertek mints the order id and prices the order itself: never invent, guess, or reuse an order id, and never pay an amount you calculated yourself. On success the response carries orderId, memo, settlementWallet, amountBaseUnits (USDC base units, 6 decimals, as a decimal string), and usdcMintAddress — to pay, send exactly amountBaseUnits of that USDC mint to settlementWallet in a single Solana transaction that also carries the returned memo string verbatim in a Memo-program instruction. The memo is how the rail matches your transfer to this order; a payment without it, with a different amount, or to a different address will not be credited. Call get_quote or get_sku_quote first if you need to know the price before committing. On validation or intake failure the response has ok=false with structured issues — fix them and call create_order again rather than paying anything.",
+} as const;
+
 function structuredToolResponse<T extends Record<string, unknown>>(result: T) {
   return {
     structuredContent: result,
@@ -77,8 +94,7 @@ export function registerAdvertekTools(
     "get_catalog",
     {
       title: "Get Advertek catalog",
-      description:
-        "Return Advertek's available print product lines and the exact SKU specification fields required to request a quote, plus every fixed-price print-on-demand SKU available today with its cost. Advertek is a commercial printer. Call this first when you do not already know which productLine values are valid, what units dimensions use, which finish/turnaround enums are accepted, or which POD SKUs and prices are currently available. The response is structured JSON (not prose): provider metadata, currency encoding notes, specRequirements, productLines with ids you must pass to get_quote, and a skuCatalog of fixed-price print-on-demand products (mugs, t-shirts, canvas, etc.) — each with its MSRP in CAD cents and a live (non-binding) USDC estimate — that you can quote exactly and order with get_sku_quote.",
+      description: ADVERTEK_TOOL_GUIDANCE.get_catalog,
       inputSchema: {},
       outputSchema: catalogToolResultSchema,
     },
@@ -92,8 +108,7 @@ export function registerAdvertekTools(
     "get_quote",
     {
       title: "Get Advertek print quote",
-      description:
-        "Validate a complete Advertek SKU specification and return a real-time production quote. Advertek prices jobs in CAD and settles in USDC. Pass the full SKU spec object (productLine, dimensions in mm, stock, finish[], quantity, turnaround). If you are unsure of allowed enums or required fields, call get_catalog first. On success, returns structured quote data with CAD cents and USDC base units as decimal strings. On validation or pricing failure, returns structured error details with ok=false — do not invent prices.",
+      description: ADVERTEK_TOOL_GUIDANCE.get_quote,
       inputSchema: quoteToolInputSchema,
       outputSchema: quoteToolResultSchema,
     },
@@ -110,8 +125,7 @@ export function registerAdvertekTools(
     "get_sku_quote",
     {
       title: "Get Advertek print-on-demand SKU quote (beta)",
-      description:
-        "Beta shortcut for Advertek's print-on-demand catalog: pass a raw SKU code and quantity — no full SKU specification needed. Call get_catalog first and use one of the codes in its skuCatalog (e.g. \"MUG-11-WHT\"). Returns real MSRP pricing in CAD cents plus the USDC-equivalent settlement amount. On an unknown SKU or invalid input, returns structured error details with ok=false — do not invent prices or SKU codes.",
+      description: ADVERTEK_TOOL_GUIDANCE.get_sku_quote,
       inputSchema: skuQuoteToolInputSchema,
       outputSchema: skuQuoteToolResultSchema,
     },
@@ -128,8 +142,7 @@ export function registerAdvertekTools(
     "create_order",
     {
       title: "Create an Advertek order and get its USDC payment request",
-      description:
-        "Place a real Advertek print order and receive the payment request that makes it payable. Pass the full order (customerOrderNumber, locationCode, shippingService, soldTo/shipTo addresses, and items — each with an internalItemId, a complete SKU spec exactly as get_quote accepts, and customsValueUsdCents as an integer string of US cents), the base58 Solana public key of the wallet that will pay, and optionally an https callbackUrl to receive signed order-status webhooks. Advertek mints the order id and prices the order itself: never invent, guess, or reuse an order id, and never pay an amount you calculated yourself. On success the response carries orderId, memo, settlementWallet, amountBaseUnits (USDC base units, 6 decimals, as a decimal string), and usdcMintAddress — to pay, send exactly amountBaseUnits of that USDC mint to settlementWallet in a single Solana transaction that also carries the returned memo string verbatim in a Memo-program instruction. The memo is how the rail matches your transfer to this order; a payment without it, with a different amount, or to a different address will not be credited. Call get_quote or get_sku_quote first if you need to know the price before committing. On validation or intake failure the response has ok=false with structured issues — fix them and call create_order again rather than paying anything.",
+      description: ADVERTEK_TOOL_GUIDANCE.create_order,
       inputSchema: createOrderToolInputSchema,
       outputSchema: createOrderToolResultSchema,
     },

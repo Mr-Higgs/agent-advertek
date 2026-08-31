@@ -86,17 +86,25 @@ A single order flows across packages like this:
 
 `@advertek/types` (Zod `skuSpecSchema`, `OrderStatus`, `Money`) plus
 `@advertek/catalog` and `@advertek/webhooks` sit underneath everything.
-`@advertek/site` is a standalone Vite/React/Tailwind landing page with no runtime
-dependency on the rest of the workspace.
+`packages/site` is a vestigial untracked build artifact of a retired Vite
+landing page (no `package.json`, not part of the workspace) — ignore it.
 
 Build order: `types` → `catalog`/`webhooks`/`payments` →
 `quote-api`/`fulfillment`/`treasury` → `db`/`mcp-server` → `apps/*`.
 
 Hosted topology (see `docs/tech-stack.md`): `apps/web` is a Next.js app on
-Vercel holding the landing page, `POST /api/quotes`, the remote MCP endpoint
-(`app/api/mcp/route.ts` via `mcp-handler`, Streamable HTTP — shares
+Vercel. The homepage (`/`) is a ChatGPT-style storefront chat
+(`components/chat/`, `POST /api/chat`): a Claude-powered concierge that
+reuses the MCP tool builders via `lib/chat-tools.ts` (Vercel AI SDK
+`streamText` + the same `ADVERTEK_TOOL_GUIDANCE` descriptions), gated on
+`ANTHROPIC_API_KEY` (clean 503 when unset) and rate-limited per IP.
+`POST /api/artwork` is the Vercel Blob client-upload token exchange for chat
+artwork, gated on `BLOB_READ_WRITE_TOKEN`. The old developer landing page
+lives at `/rail`. The app also holds `POST /api/quotes`, the remote MCP
+endpoint (`app/api/mcp/route.ts` via `mcp-handler`, Streamable HTTP — shares
 `registerAdvertekTools` with the stdio server), and the QuickNode/Advertek
-webhook route handlers. `@advertek/db` implements the persistence seams on
+webhook route handlers. The site's visual system is monochrome
+(ink-on-paper); all color flows through `components/theme.ts` tokens. `@advertek/db` implements the persistence seams on
 Postgres (Supabase in deployment) via an injected `SqlExecutor` — unit tests
 use recording fakes, never a database. `apps/treasury-worker` is the only
 process holding money-moving secrets (settlement keypair + OKX trading
@@ -166,3 +174,9 @@ is wired up end to end. The two long-standing ones (`STEP_9` order intake,
   rate limiting (`apps/web/lib/api-guard.ts`); `/api/catalog` stays public.
   Auth turns on as soon as `ADVERTEK_API_KEYS` is set — these are
   request-authorization keys, never money-moving credentials.
+- `/api/chat` and `/api/artwork` are deliberately public (they serve the
+  homepage chat) but per-IP rate-limited, and call the quote/order lib
+  functions in-process rather than over HTTP, so no API key is exposed to the
+  browser. Config loaders live in `apps/web/lib/chat-config.ts`
+  (`ANTHROPIC_API_KEY`, optional `CHAT_MODEL_ID`/`CHAT_MAX_STEPS`,
+  `BLOB_READ_WRITE_TOKEN`); each route 503s cleanly when unconfigured.

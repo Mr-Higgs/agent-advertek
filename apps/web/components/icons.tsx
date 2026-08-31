@@ -23,7 +23,7 @@ export function CropMark({ className, stroke }: CropMarkProps) {
   );
 }
 
-/** Registration mark — kept in brand red, the way a print shop's registration mark is traditionally struck in red ink. */
+/** Registration mark — struck in solid ink, the way the mono identity prints every glyph. */
 export function RegMark() {
   return (
     <svg width="26" height="26" viewBox="0 0 26 26" fill="none" aria-hidden="true">
@@ -38,7 +38,7 @@ interface AdvertekMarkProps {
   readonly size?: number;
 }
 
-/** The Advertek Agent mark, simplified: a red sliver and a navy chevron forming the "A", the way it reads in the source logo. */
+/** The Advertek Agent mark, simplified: a sliver and a chevron forming the "A", struck in solid ink. */
 export function AdvertekMark({ size = 28 }: AdvertekMarkProps) {
   return (
     <svg width={size} height={size} viewBox="0 0 100 100" aria-hidden="true">

@@ -209,7 +209,7 @@ export function RailAccessForm({ theme: t, onClose }: RailAccessFormProps) {
               type="button"
               onClick={onClose}
               className="font-mono text-xs tracking-widest uppercase px-6 py-3"
-              style={{ backgroundColor: ACCENT, color: "#FFFFFF" }}
+              style={{ backgroundColor: t.accent, color: t.accentContrast }}
             >
               Close
             </button>
@@ -299,7 +299,7 @@ export function RailAccessForm({ theme: t, onClose }: RailAccessFormProps) {
             </div>
 
             {submitState.status === "error" && (
-              <p className="text-sm mt-5" style={{ color: ACCENT }}>
+              <p className="text-sm mt-5" style={{ color: t.accent }}>
                 {submitState.message}
               </p>
             )}
@@ -309,7 +309,7 @@ export function RailAccessForm({ theme: t, onClose }: RailAccessFormProps) {
                 type="submit"
                 disabled={submitState.status === "submitting"}
                 className="font-mono text-xs tracking-widest uppercase px-6 py-3 disabled:opacity-50"
-                style={{ backgroundColor: ACCENT, color: "#FFFFFF" }}
+                style={{ backgroundColor: t.accent, color: t.accentContrast }}
               >
                 {submitState.status === "submitting" ? "Sending…" : "Send Request"}
               </button>

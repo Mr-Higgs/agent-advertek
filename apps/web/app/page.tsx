@@ -1,5 +1,5 @@
-import AdvertekAgent from "@/components/advertek-agent";
+import PrintShopChat from "@/components/chat/print-shop-chat";
 
-export default function Page() {
-  return <AdvertekAgent />;
+export default function Home() {
+  return <PrintShopChat />;
 }

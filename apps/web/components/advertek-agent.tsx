@@ -3,7 +3,7 @@
 import { Fragment, useEffect, useState, type CSSProperties, type ReactNode } from "react";
 import { Moon, Sun } from "lucide-react";
 import { RailAccessForm } from "./rail-access-form";
-import { ACCENT, SOLANA_GRAD, themes, type Theme, type ThemeMode } from "./theme";
+import { SOLANA_GRAD, themes, type Theme, type ThemeMode } from "./theme";
 import { AdvertekMark, RegMark } from "./icons";
 import { IntegrationExplorer } from "./integration-explorer";
 
@@ -105,7 +105,7 @@ interface SectionHeadingProps {
 function SectionHeading({ eyebrow, title, theme: t }: SectionHeadingProps) {
   return (
     <>
-      <div className="font-mono text-xs tracking-widest uppercase mb-3" style={{ color: ACCENT }}>
+      <div className="font-mono text-xs tracking-widest uppercase mb-3" style={{ color: t.accent }}>
         {eyebrow}
       </div>
       <h2
@@ -120,7 +120,7 @@ function SectionHeading({ eyebrow, title, theme: t }: SectionHeadingProps) {
 
 export default function AdvertekAgent() {
   const [mounted, setMounted] = useState(false);
-  const [mode, setMode] = useState<ThemeMode>("dark");
+  const [mode, setMode] = useState<ThemeMode>("light");
   const [isFormOpen, setIsFormOpen] = useState(false);
   const t = themes[mode];
   const isDark = mode === "dark";
@@ -139,10 +139,10 @@ export default function AdvertekAgent() {
     color: t.text,
     fontFamily: "var(--font-sans), 'IBM Plex Sans', sans-serif",
     transition: "background-color 0.25s ease, color 0.25s ease",
-    "--accent": ACCENT,
+    "--accent": t.accent,
     "--solana-grad": SOLANA_GRAD,
     "--grid-line": t.line,
-    "--pulse-color": "rgba(20,241,149,0.45)",
+    "--pulse-color": t.accent,
   } as CSSProperties;
 
   // Border-less base so callers can apply either the `border` shorthand or
@@ -160,17 +160,9 @@ export default function AdvertekAgent() {
 
   return (
     <div className="relative w-full min-h-screen" style={rootStyle}>
-      {/* Ambient background: masked grid + accent glows */}
+      {/* Ambient background: masked grid */}
       <div aria-hidden className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
         <div className="grid-bg absolute inset-0" style={{ opacity: isDark ? 0.5 : 0.35 }} />
-        <div
-          className="hero-glow absolute"
-          style={{ width: 560, height: 560, top: -220, left: "12%", background: t.glow }}
-        />
-        <div
-          className="hero-glow absolute"
-          style={{ width: 460, height: 460, top: 60, right: "-4%", background: "rgba(153,69,255,0.16)" }}
-        />
       </div>
 
       <div className="relative z-10">
@@ -191,7 +183,7 @@ export default function AdvertekAgent() {
                 <span className="font-mono text-sm tracking-widest uppercase block" style={{ color: t.text }}>
                   Advertek Agent
                 </span>
-                <span className="font-mono block" style={{ color: ACCENT, fontSize: "0.55rem", letterSpacing: "0.2em" }}>
+                <span className="font-mono block" style={{ color: t.accent, fontSize: "0.55rem", letterSpacing: "0.2em" }}>
                   Going Beyond Ink
                 </span>
               </div>
@@ -235,7 +227,7 @@ export default function AdvertekAgent() {
               >
                 <span
                   className="pulse-dot inline-block w-1.5 h-1.5 rounded-full"
-                  style={{ background: "#14F195" }}
+                  style={{ background: t.accent }}
                 />
                 Agent Fulfillment Rail — North America
               </div>
@@ -261,7 +253,7 @@ export default function AdvertekAgent() {
                     setIsFormOpen(true);
                   }}
                   className="font-mono text-xs tracking-widest uppercase px-6 py-3.5 rounded-md"
-                  style={{ backgroundColor: ACCENT, color: "#FFFFFF", boxShadow: `0 10px 34px ${t.glow}` }}
+                  style={{ backgroundColor: t.accent, color: t.accentContrast, boxShadow: `0 10px 34px ${t.glow}` }}
                 >
                   Request Rail Access
                 </button>
@@ -295,9 +287,9 @@ export default function AdvertekAgent() {
                   style={{ borderBottom: `1px solid ${t.cardBorder}` }}
                 >
                   <div className="flex items-center gap-2">
-                    <span className="w-2.5 h-2.5 rounded-full" style={{ background: "#FF5F57" }} />
-                    <span className="w-2.5 h-2.5 rounded-full" style={{ background: "#FEBC2E" }} />
-                    <span className="w-2.5 h-2.5 rounded-full" style={{ background: "#28C840" }} />
+                    <span className="w-2.5 h-2.5 rounded-full" style={{ background: "#D4D4D4" }} />
+                    <span className="w-2.5 h-2.5 rounded-full" style={{ background: "#A3A3A3" }} />
+                    <span className="w-2.5 h-2.5 rounded-full" style={{ background: "#737373" }} />
                   </div>
                   <span className="font-mono text-xs tracking-widest uppercase" style={{ color: t.mid }}>
                     advertek://rail
@@ -318,7 +310,7 @@ export default function AdvertekAgent() {
                       className="grad-border flex items-center gap-2 font-mono text-xs px-3 py-1.5 rounded-full"
                       style={{ color: t.text }}
                     >
-                      <span className="pulse-dot inline-block w-1.5 h-1.5 rounded-full" style={{ background: "#14F195" }} />
+                      <span className="pulse-dot inline-block w-1.5 h-1.5 rounded-full" style={{ background: t.accent }} />
                       SOL · USDC — Confirmed
                     </div>
                   </div>
@@ -337,7 +329,7 @@ export default function AdvertekAgent() {
                         <dt style={{ color: t.mid }}>{k}</dt>
                         <dd
                           className="text-right"
-                          style={{ color: k === "STATUS" ? ACCENT : t.text, fontWeight: k === "STATUS" ? 600 : 400 }}
+                          style={{ color: k === "STATUS" ? t.accent : t.text, fontWeight: k === "STATUS" ? 600 : 400 }}
                         >
                           {v}
                         </dd>
@@ -348,7 +340,7 @@ export default function AdvertekAgent() {
 
                 {/* code payload */}
                 <div className="px-5 py-5 font-mono text-xs leading-relaxed" style={{ backgroundColor: t.payloadBg }}>
-                  <div className="mb-3 tracking-widest uppercase" style={{ color: "#14F195", fontSize: "0.65rem" }}>
+                  <div className="mb-3 tracking-widest uppercase" style={{ color: t.mid, fontSize: "0.65rem" }}>
                     Originating request
                   </div>
                   {payloadLines.map((line, i) => (
@@ -367,7 +359,7 @@ export default function AdvertekAgent() {
                     <div
                       key={`r-${String(i)}`}
                       className={`payload-line ${mounted ? "mounted" : ""}`}
-                      style={{ transitionDelay: `${String(i * 45 + 700)}ms`, color: "#7EE7C0" }}
+                      style={{ transitionDelay: `${String(i * 45 + 700)}ms`, color: t.midStrong }}
                     >
                       {line}
                     </div>
@@ -406,7 +398,7 @@ export default function AdvertekAgent() {
                   className={`lift rounded-lg p-5 ${s.onChain ? "grad-border" : ""}`}
                   style={{
                     ...glassBase,
-                    borderTop: s.onChain ? `1px solid ${t.cardBorder}` : `2px solid ${ACCENT}`,
+                    borderTop: s.onChain ? `1px solid ${t.cardBorder}` : `2px solid ${t.accent}`,
                     borderRight: `1px solid ${t.cardBorder}`,
                     borderBottom: `1px solid ${t.cardBorder}`,
                     borderLeft: `1px solid ${t.cardBorder}`,
@@ -478,7 +470,7 @@ export default function AdvertekAgent() {
                   {i < stack.length - 1 && (
                     <div
                       className="flex items-center justify-center font-mono text-sm px-2 py-3 md:py-0"
-                      style={{ color: ACCENT }}
+                      style={{ color: t.accent }}
                       aria-hidden="true"
                     >
                       →
@@ -517,7 +509,7 @@ export default function AdvertekAgent() {
                   setIsFormOpen(true);
                 }}
                 className="font-mono text-xs tracking-widest uppercase px-6 py-3.5 rounded-md"
-                style={{ backgroundColor: ACCENT, color: "#FFFFFF", boxShadow: `0 10px 34px ${t.glow}` }}
+                style={{ backgroundColor: t.accent, color: t.accentContrast, boxShadow: `0 10px 34px ${t.glow}` }}
               >
                 Request Rail Access
               </button>
@@ -537,7 +529,7 @@ export default function AdvertekAgent() {
                 <AdvertekMark size={18} />
                 <span>Advertek Printing — North York, ON</span>
               </div>
-              <span style={{ color: ACCENT, letterSpacing: "0.15em" }}>GOING BEYOND INK</span>
+              <span style={{ color: t.accent, letterSpacing: "0.15em" }}>GOING BEYOND INK</span>
             </div>
           </div>
         </footer>

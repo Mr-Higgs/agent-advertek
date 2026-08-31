@@ -1,4 +1,5 @@
 export {
+  ADVERTEK_TOOL_GUIDANCE,
   createAdvertekMcpServer,
   registerAdvertekTools,
   type AdvertekMcpServerDeps,
