@@ -11,6 +11,11 @@ const nextConfig: NextConfig = {
     "@advertek/types",
     "@advertek/webhooks",
   ],
+  async redirects() {
+    return [
+      { source: "/rail", destination: "/platform", permanent: true },
+    ];
+  },
 };
 
 export default nextConfig;
