@@ -1,7 +1,17 @@
 @import "tailwindcss";
 
+@theme {
+  --color-signal: #FF4D00;
+  --color-signal-contrast: #FFFFFF;
+  --color-ink: #0A0A0A;
+  --color-paper: #FFFFFF;
+  --color-mid: #6B6B6B;
+}
+
 :root {
   color-scheme: light;
+  --signal: #FF4D00;
+  --signal-contrast: #FFFFFF;
 }
 
 html {

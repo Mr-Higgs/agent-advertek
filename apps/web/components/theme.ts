@@ -26,6 +26,10 @@ export interface Theme {
   readonly accent: string;
   /** Text/foreground set against `accent`. */
   readonly accentContrast: string;
+  /** Production-orange signal color for live states and primary CTAs. */
+  readonly signal: string;
+  /** Text/foreground set against `signal`. */
+  readonly signalContrast: string;
 }
 
 /**
@@ -34,6 +38,9 @@ export interface Theme {
  */
 export const ACCENT = "#0A0A0A";
 export const NAVY = "#0A0A0A";
+
+/** Production-orange signal. White-on-orange passes WCAG AA large text; use on light surfaces with caution. */
+export const SIGNAL = "#FF4D00";
 
 /** On-chain / settlement moments: struck as quiet gray, no longer a brand gradient. */
 export const SOLANA_START = "#666666";
@@ -61,6 +68,8 @@ export const themes: Record<ThemeMode, Theme> = {
     glow: "transparent",
     accent: "#000000",
     accentContrast: "#FFFFFF",
+    signal: SIGNAL,
+    signalContrast: "#FFFFFF",
   },
   dark: {
     bg: "#0A0A0A",
@@ -82,5 +91,7 @@ export const themes: Record<ThemeMode, Theme> = {
     glow: "transparent",
     accent: "#FFFFFF",
     accentContrast: "#0A0A0A",
+    signal: SIGNAL,
+    signalContrast: "#FFFFFF",
   },
 };

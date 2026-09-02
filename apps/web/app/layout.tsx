@@ -2,6 +2,9 @@ import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { Archivo, IBM_Plex_Mono, IBM_Plex_Sans, Instrument_Serif } from "next/font/google";
 import "./globals.css";
+import { GlobalHeader } from "@/components/site/header";
+import { GlobalFooter } from "@/components/site";
+import { createMetadata } from "@/lib/site-config";
 
 const display = Archivo({
   subsets: ["latin"],
@@ -32,24 +35,7 @@ const mono = IBM_Plex_Mono({
   display: "swap",
 });
 
-const description =
-  "A print shop you can talk to. Tell Advertek's agent what you want printed — it quotes in CAD, takes your artwork, and settles in USDC on Solana.";
-
-export const metadata: Metadata = {
-  title: "Advertek — a print shop you can talk to",
-  description,
-  openGraph: {
-    title: "Advertek",
-    description,
-    siteName: "Advertek",
-    type: "website",
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "Advertek",
-    description,
-  },
-};
+export const metadata: Metadata = createMetadata("home");
 
 export default function RootLayout({ children }: { readonly children: ReactNode }) {
   return (
@@ -57,7 +43,19 @@ export default function RootLayout({ children }: { readonly children: ReactNode 
       lang="en"
       className={`${display.variable} ${serif.variable} ${sans.variable} ${mono.variable}`}
     >
-      <body>{children}</body>
+      <body className="flex flex-col min-h-screen">
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-[60] focus:bg-ink focus:text-paper focus:px-4 focus:py-2"
+        >
+          Skip to main content
+        </a>
+        <GlobalHeader />
+        <main id="main-content" className="flex-1">
+          {children}
+        </main>
+        <GlobalFooter />
+      </body>
     </html>
   );
 }
