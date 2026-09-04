@@ -18,20 +18,19 @@ Advertek connects AI agents and software platforms to real-world commercial prod
 Review the existing codebase first.
 
 Understand the current:
-
-• framework and architecture
-• page structure
-• components
-• API routes
-• CMS or content structure
-• authentication
-• demo implementation
-• analytics
-• SEO configuration
-• deployment setup
-• payment architecture
-• MCP implementation
-• production integrations
+    • framework and architecture
+    • page structure
+    • components
+    • API routes
+    • CMS or content structure
+    • authentication
+    • demo implementation
+    • analytics
+    • SEO configuration
+    • deployment setup
+    • payment architecture
+    • MCP implementation
+    • production integrations
 
 Then implement the attached brief.
 
@@ -46,15 +45,14 @@ Preserve existing functionality unless the brief explicitly changes it.
 Complete all P0 items first.
 
 These include:
-
-• Remove the expired static quote timestamp
-• Replace static expiry dates with dynamically generated valid timestamps where required
-• Update homepage positioning
-• Improve hero CTA hierarchy
-• Strengthen the live demo experience
-• Improve proof and credibility
-• Remove or relocate internal engineering language from marketing pages
-• Make technical claims match current production capabilities
+    • Remove the expired static quote timestamp
+    • Replace static expiry dates with dynamically generated valid timestamps where required
+    • Update homepage positioning
+    • Improve hero CTA hierarchy
+    • Strengthen the live demo experience
+    • Improve proof and credibility
+    • Remove or relocate internal engineering language from marketing pages
+    • Make technical claims match current production capabilities
 
 Treat any misleading production claim as a release blocker.
 
@@ -468,66 +466,65 @@ Test at minimum:
 
 Validate:
 
-• navigation
-• CTAs
-• forms
-• demo
-• API examples
-• mobile overflow
-• typography
-• spacing
-• loading states
-• error states
-• empty states
-• page metadata
-• internal links
-• external links
-• 404 behavior
+    • navigation
+    • CTAs
+    • forms
+    • demo
+    • API examples
+    • mobile overflow
+    • typography
+    • spacing
+    • loading states
+    • error states
+    • empty states
+    • page metadata
+    • internal links
+    • external links
+    • 404 behavior
 
 # Run any existing:
-
-• lint
-• type checks
-• unit tests
-• integration tests
-• production build
+    • lint
+    • type checks
+    • unit tests
+    • integration tests
+    • production build
 
 Fix failures introduced by your changes.
 
 Acceptance criteria
 
 # The implementation is complete when:
-
-• no expired timestamps appear
-• no false production claims appear
-• homepage communicates the product within the first viewport
-• Agent Rail demo explains the workflow clearly
-• business and developer CTAs are distinct
-• lead form friction is reduced
-• production proof is visible
-• developer onboarding is clearer
-• all new pages work on mobile
-• analytics cover key conversion events
-• metadata is complete
-• production build passes
-• existing functionality has no material regressions
+    • no expired timestamps appear
+    • no false production claims appear
+    • homepage communicates the product within the first viewport
+    • Agent Rail demo explains the workflow clearly
+    • business and developer CTAs are distinct
+    • lead form friction is reduced
+    • production proof is visible
+    • developer onboarding is clearer
+    • all new pages work on mobile
+    • analytics cover key conversion events
+    • metadata is complete
+    • production build passes
+    • existing functionality has no material regressions
 
 Final output
 
 # When complete, provide:
 
-Summary of work completed
-Files changed
-Routes added or modified
-Components added
-Backend changes
-API changes
-Analytics added
-SEO changes
-Items blocked by missing credentials, data, or backend functionality
-x402 implementation status
-Testing performed
-Remaining P2 or future recommendations
+    Summary of work completed
+    Files changed
+    Routes added or modified
+    Components added
+    Backend changes
+    API changes
+    Analytics added
+    SEO changes
+    Items blocked by missing credentials, data, or backend functionality
+    x402 implementation status
+    Testing performed
+    Remaining P2 or future recommendations
+
 For every blocked item, explain exactly what input or credential is required.
 Do not mark unfinished work as completed.
 
