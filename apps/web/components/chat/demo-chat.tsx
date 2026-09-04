@@ -39,6 +39,8 @@ export function DemoChat() {
   const [uploadError, setUploadError] = useState<string | undefined>(undefined);
   const [dragging, setDragging] = useState(false);
   const restored = useRef(false);
+  const startedTracked = useRef(false);
+  const completedTracked = useRef(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -67,6 +69,15 @@ export function DemoChat() {
     bottomRef.current?.scrollIntoView({ block: "end" });
   }, [messages, status]);
 
+  useEffect(() => {
+    if (completedTracked.current || status !== "ready") return;
+    const hasAssistant = messages.some((message) => message.role === "assistant");
+    if (hasAssistant) {
+      track("demo_completed");
+      completedTracked.current = true;
+    }
+  }, [messages, status]);
+
   const busy = status === "submitted" || status === "streaming";
   const empty = messages.length === 0;
 
@@ -75,6 +86,10 @@ export function DemoChat() {
       const trimmed = text.trim();
       const artworkLines = attachments.map((a) => `Artwork: ${a.url}`);
       if (trimmed.length === 0 && artworkLines.length === 0) return;
+      if (!startedTracked.current) {
+        track("demo_started", { source: (demoPage.suggestedPrompts as readonly string[]).includes(trimmed) ? "example" : "custom" });
+        startedTracked.current = true;
+      }
       void sendMessage({ text: [trimmed, ...artworkLines].filter(Boolean).join("\n") });
       track("demo_prompt_submitted");
       setInput("");

@@ -363,13 +363,13 @@ export const facilityFacts = [
 ] as const;
 
 export const homepage = {
-  eyebrow: "AGENTIC PRODUCTION INFRASTRUCTURE",
+  eyebrow: "ADVERTEK AGENT RAIL",
   headline: "Physical production for AI agents.",
-  body: "Advertek connects AI agents and software platforms to commercial print, packaging, direct mail, and promotional production through one machine-native interface.",
-  workflow: "Spec. Quote. Pay. Produce. Ship.",
-  primaryCta: { label: "Request Access", href: routes.access },
-  secondaryCta: { label: "Read Developer Docs", href: routes.developers },
-  proof: "Built on a 77,000 sq. ft. commercial production facility in Toronto.",
+  body: "Give AI agents and software platforms a machine-readable path from intent to quote to payment to production, fulfillment, and tracking.",
+  workflow: "Spec. Quote. Pay. Produce. Fulfill. Track.",
+  primaryCta: { label: "Connect Your Agent", href: routes.developers },
+  secondaryCta: { label: "Run the Demo", href: routes.demo },
+  proof: `Founded ${facilityFacts[0].value} · ${facilityFacts[1].value} ${facilityFacts[2].value} facility · ${facilityFacts[3].value} production categories · ${facilityFacts[4].value} · ${facilityFacts[5].value}`,
 } as const;
 
 export const demoPage = {
@@ -437,9 +437,9 @@ export const pageMeta: Record<
   { title: string; description: string; path: string; noIndex?: boolean }
 > = {
   home: {
-    title: "Advertek | Physical Production for AI Agents",
+    title: "Advertek Agent Rail",
     description:
-      "Advertek connects AI agents and software platforms to commercial print, packaging, direct mail, and promotional production through one machine-native interface.",
+      "Give AI agents and software platforms a machine-readable path from intent to quote to payment to production, fulfillment, and tracking through MCP and REST.",
     path: routes.home,
   },
   platform: {
@@ -527,23 +527,19 @@ export function createMetadata(key: PageMetaKey): Metadata {
 
 export const analyticsEvents = [
   "nav_cta_clicked",
-  "hero_access_clicked",
-  "developer_docs_viewed",
+  "hero_cta_clicked",
+  "protocol_link_clicked",
   "demo_started",
+  "demo_step_viewed",
+  "demo_completed",
   "demo_prompt_submitted",
   "artwork_attached",
-  "catalog_requested",
-  "demo_quote_requested",
-  "demo_quote_completed",
-  "demo_quote_failed",
-  "mcp_snippet_copied",
-  "rest_snippet_copied",
-  "use_case_viewed",
-  "whitepaper_section_viewed",
+  "code_copied",
   "access_form_started",
-  "access_form_submitted",
   "access_form_failed",
-  "advertek_printing_clicked",
+  "enterprise_access_submitted",
+  "developer_access_submitted",
+  "x402_payment_result",
 ] as const;
 
 export type AnalyticsEvent = (typeof analyticsEvents)[number];

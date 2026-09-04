@@ -9,9 +9,13 @@ import {
   StatusBadge,
 } from "@/components/site";
 import { CodeExample } from "@/components/site/code-example";
+import { HeroCTAs } from "@/components/site/hero-ctas";
 import { homepage, productionCapabilities, routes, useCases, createMetadata } from "@/lib/site-config";
+import { getQuoteExpiry } from "@/lib/date";
 
 export const metadata = createMetadata("home");
+
+export const dynamic = "force-dynamic";
 
 const productSteps = [
   { label: "Spec", body: "Submit product, quantity, dimensions, material, finish, deadline, destination, and artwork through MCP or REST." },
@@ -42,6 +46,8 @@ Content-Type: application/json
 }`;
 
 export default function HomePage() {
+  const quoteExpiry = getQuoteExpiry(30);
+
   return (
     <>
       <section className="pt-16 pb-12 md:pt-24 md:pb-16">
@@ -56,20 +62,7 @@ export default function HomePage() {
                 {homepage.body}
               </p>
               <p className="font-mono text-[13px] md:text-[14px] tracking-widest mb-8">{homepage.workflow}</p>
-              <div className="flex flex-wrap items-center gap-4">
-                <Link
-                  href={homepage.primaryCta.href}
-                  className="inline-flex items-center gap-2 font-mono text-[11px] uppercase tracking-widest bg-signal text-signal-contrast px-6 py-3 hover:opacity-90"
-                >
-                  {homepage.primaryCta.label}
-                </Link>
-                <Link
-                  href={homepage.secondaryCta.href}
-                  className="inline-flex items-center gap-2 font-mono text-[11px] uppercase tracking-widest border border-ink/10 px-6 py-3 hover:border-ink"
-                >
-                  {homepage.secondaryCta.label}
-                </Link>
-              </div>
+              <HeroCTAs primary={homepage.primaryCta} secondary={homepage.secondaryCta} />
               <p className="mt-6 text-[13px] text-mid">{homepage.proof}</p>
             </div>
             <div className="hidden lg:block">
@@ -85,7 +78,7 @@ spec:
   shipTo:      Toronto, ON
 quote:
   total:  187.50 USDC
-  expiry: 2026-09-02T20:19:00Z`}</pre>
+  expiry: ${quoteExpiry}`}</pre>
               </JobTicket>
             </div>
           </div>
@@ -219,8 +212,8 @@ quote:
             the real schema; no fields are invented.
           </p>
           <div className="grid gap-6 lg:grid-cols-2">
-            <CodeExample title="Request" language="HTTP" code={catalogRequest} event="rest_snippet_copied" />
-            <CodeExample title="Response" language="JSON" code={catalogResponse} event="rest_snippet_copied" />
+            <CodeExample title="Request" language="HTTP" code={catalogRequest} />
+            <CodeExample title="Response" language="JSON" code={catalogResponse} />
           </div>
           <div className="mt-8">
             <Link

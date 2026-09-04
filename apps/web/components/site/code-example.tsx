@@ -8,17 +8,16 @@ interface CodeExampleProps {
   readonly title: string;
   readonly language: string;
   readonly code: string;
-  readonly event?: "mcp_snippet_copied" | "rest_snippet_copied";
 }
 
-export function CodeExample({ title, language, code, event }: CodeExampleProps) {
+export function CodeExample({ title, language, code }: CodeExampleProps) {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(code);
       setCopied(true);
-      if (event) track(event, { source: title });
+      track("code_copied", { language, example: title });
       setTimeout(() => { setCopied(false); }, 2000);
     } catch {
       // Ignore copy failures.

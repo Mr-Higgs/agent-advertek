@@ -9,8 +9,11 @@ import {
 } from "@/components/site";
 import { CodeExample } from "@/components/site/code-example";
 import { createMetadata, developersPage, routes } from "@/lib/site-config";
+import { getQuoteExpiry } from "@/lib/date";
 
 export const metadata = createMetadata("developers");
+
+export const dynamic = "force-dynamic";
 
 const endpoints: readonly EndpointRow[] = [
   { method: "GET", path: "/api/catalog", auth: "None", status: "pilot", effect: "Returns product lines and POD categories." },
@@ -56,22 +59,6 @@ Content-Type: application/json
   }
 }`;
 
-const quoteResponse = `HTTP/1.1 200 OK
-Content-Type: application/json
-
-{
-  "ok": true,
-  "quote": {
-    "id": "qt_4d2a...",
-    "total": {
-      "currency": "USDC",
-      "amountBaseUnits": "187500000"
-    },
-    "expiresAt": "2026-09-02T20:19:00Z",
-    "demoPricing": true
-  }
-}`;
-
 const orderResponse = `HTTP/1.1 201 Created
 Content-Type: application/json
 
@@ -89,6 +76,23 @@ const statusVocab = `"pending-payment" | "paid" | "downloaded" | "printing" |
 "cancelled" | "failed"`;
 
 export default function DevelopersPage() {
+  const quoteExpiry = getQuoteExpiry(30);
+  const quoteResponse = `HTTP/1.1 200 OK
+Content-Type: application/json
+
+{
+  "ok": true,
+  "quote": {
+    "id": "qt_4d2a...",
+    "total": {
+      "currency": "USDC",
+      "amountBaseUnits": "187500000"
+    },
+    "expiresAt": "${quoteExpiry}",
+    "demoPricing": true
+  }
+}`;
+
   return (
     <>
       <section className="pt-16 pb-12 md:pt-24 md:pb-16">
@@ -178,7 +182,7 @@ export default function DevelopersPage() {
             Agent Rail is an MCP server over HTTP. Your agent calls the same tools the REST API exposes, but through the
             Model Context Protocol.
           </p>
-          <CodeExample title="mcp_config.json" language="JSON" code={mcpConfig} event="mcp_snippet_copied" />
+          <CodeExample title="mcp_config.json" language="JSON" code={mcpConfig} />
         </PageShell>
       </section>
 
@@ -186,8 +190,8 @@ export default function DevelopersPage() {
         <PageShell>
           <h2 className="font-display text-2xl md:text-3xl font-medium mb-6">Quote example</h2>
           <div className="grid gap-6 lg:grid-cols-2">
-            <CodeExample title="Request" language="HTTP" code={quoteRequest} event="rest_snippet_copied" />
-            <CodeExample title="Response" language="JSON" code={quoteResponse} event="rest_snippet_copied" />
+            <CodeExample title="Request" language="HTTP" code={quoteRequest} />
+            <CodeExample title="Response" language="JSON" code={quoteResponse} />
           </div>
           <InlineCallout title="Non-binding demo">
             The response above shows demo pricing. Real quotes require a production pricing and spot-rate configuration.
@@ -203,7 +207,7 @@ export default function DevelopersPage() {
             returns payment instructions. The agent supplies the payer wallet; the rail supplies the order id, memo, and
             amount. No funds move until the wallet authorizes the transfer.
           </p>
-          <CodeExample title="Order response" language="JSON" code={orderResponse} event="rest_snippet_copied" />
+          <CodeExample title="Order response" language="JSON" code={orderResponse} />
         </PageShell>
       </section>
 
