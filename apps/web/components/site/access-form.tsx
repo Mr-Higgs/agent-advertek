@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { usePathname } from "next/navigation";
 import { accessRequestSchema, type AccessRequestInput } from "@/lib/access-schema";
 import { productionCapabilities } from "@/lib/site-config";
 import { track } from "@/lib/analytics";
@@ -37,6 +38,7 @@ const useCaseOptions = [
 ];
 
 export function AccessForm({ successText }: { readonly successText: string }) {
+  const pathname = usePathname();
   const [form, setForm] = useState<AccessRequestInput>(initial);
   const [errors, setErrors] = useState<FieldErrors>({});
   const [submitting, setSubmitting] = useState(false);
@@ -95,7 +97,7 @@ export function AccessForm({ successText }: { readonly successText: string }) {
       const data = (await response.json()) as { ok?: boolean; error?: string; message?: string };
       if (response.ok && data.ok) {
         setSuccess(true);
-        track("access_form_submitted");
+        track("enterprise_access_submitted", { source: pathname, categoryCount: form.categories.length });
       } else {
         setServerMessage(data.error ?? data.message ?? "Submission failed. Please try again.");
         track("access_form_failed", { errorCategory: String(data.error) });

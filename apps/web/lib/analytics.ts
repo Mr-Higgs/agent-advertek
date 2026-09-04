@@ -20,6 +20,11 @@ export interface TrackProps {
   readonly environment?: string;
   readonly status?: string;
   readonly errorCategory?: string;
+  readonly cta?: string;
+  readonly route?: string;
+  readonly example?: string;
+  readonly language?: string;
+  readonly categoryCount?: number;
 }
 
 export function track(event: AnalyticsEvent, props?: TrackProps): void {
