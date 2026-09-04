@@ -54,6 +54,7 @@ export async function POST(request: Request): Promise<Response> {
         { status: 400 },
       );
     }
+    console.error("Order intake failed:", error);
     return jsonResponse({ ok: false, error: "Order intake failed" }, { status: 500 });
   }
 }

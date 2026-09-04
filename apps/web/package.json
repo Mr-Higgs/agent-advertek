@@ -25,7 +25,6 @@
     "@ai-sdk/anthropic": "^4.0.46",
     "@ai-sdk/react": "^4.0.88",
     "@modelcontextprotocol/sdk": "1.26.0",
-    "@vercel/blob": "^2.8.0",
     "ai": "^7.0.85",
     "lucide-react": "^1.29.0",
     "mcp-handler": "^1.1.0",

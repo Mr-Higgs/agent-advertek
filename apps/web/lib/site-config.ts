@@ -513,7 +513,7 @@ export function createMetadata(key: PageMetaKey): Metadata {
       url,
       siteName: siteName,
       type: "website",
-      images: [{ url: image, width: 1200, height: 630, alt: title }],
+      images: [{ url: image, width: 1200, height: 640, alt: title }],
     },
     twitter: {
       card: "summary_large_image",

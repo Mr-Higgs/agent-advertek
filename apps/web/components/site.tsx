@@ -2,7 +2,6 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import type { Capability, FeatureStatus, Status, UseCase } from "@/lib/site-config";
 import { featureStatuses, facilityFacts, statusInfo, routes, footerGroups } from "@/lib/site-config";
-import { AdvertekMark } from "./icons";
 import { SIGNAL } from "./theme";
 
 export function StatusBadge({ status }: { readonly status: Status }) {
@@ -296,8 +295,13 @@ export function GlobalFooter() {
         <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-5">
           <div className="lg:col-span-2">
             <Link href={routes.home} className="flex items-center gap-2.5 mb-4">
-              <AdvertekMark size={24} />
-              <span className="font-display font-black tracking-[0.08em] text-sm">ADVERTEK</span>
+              <img
+                src="/logo/advertek-agent-lockup.png"
+                alt="Advertek Agent"
+                width={81}
+                height={48}
+                className="h-12 w-auto"
+              />
             </Link>
             <p className="text-[14px] leading-relaxed text-mid max-w-xs">
               Advertek Agent Rail connects software to commercial production. Built on an operating Toronto production floor.

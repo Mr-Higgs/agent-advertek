@@ -38,6 +38,14 @@ describe("tryLoadChatConfig", () => {
     expect(tryLoadChatConfig({ ANTHROPIC_API_KEY: "sk-ant-test" })?.apiKey).toBe("sk-ant-test");
   });
 
+  it("carries the optional workspace id", () => {
+    const config = tryLoadChatConfig({
+      ANTHROPIC_API_KEY: "sk-ant-test",
+      ANTHROPIC_WORKSPACE_ID: "wrkspc_123",
+    });
+    expect(config).toMatchObject({ apiKey: "sk-ant-test", workspaceId: "wrkspc_123" });
+  });
+
   it("still throws when the key is present but a companion value is invalid", () => {
     expect(() =>
       tryLoadChatConfig({ ANTHROPIC_API_KEY: "sk-ant-test", CHAT_MAX_STEPS: "-1" }),

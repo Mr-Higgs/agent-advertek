@@ -4,7 +4,6 @@ import { useState, useId } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Menu, X } from "lucide-react";
-import { AdvertekMark } from "@/components/icons";
 import { mainNav, routes } from "@/lib/site-config";
 import { track } from "@/lib/analytics";
 
@@ -21,8 +20,13 @@ export function GlobalHeader() {
           className="flex items-center gap-2.5 focus-visible:outline-offset-4"
           onClick={() => { track("nav_cta_clicked", { page: pathname, source: "header-wordmark" }); }}
         >
-          <AdvertekMark size={24} />
-          <span className="font-display font-black tracking-[0.08em] text-sm">ADVERTEK</span>
+          <img
+            src="/logo/advertek-agent-lockup.png"
+            alt="Advertek Agent"
+            width={81}
+            height={48}
+            className="h-12 w-auto"
+          />
         </Link>
 
         <nav aria-label="Primary" className="hidden md:flex items-center gap-8">

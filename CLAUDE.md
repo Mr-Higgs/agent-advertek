@@ -93,14 +93,23 @@ Build order: `types` → `catalog`/`webhooks`/`payments` →
 `quote-api`/`fulfillment`/`treasury` → `db`/`mcp-server` → `apps/*`.
 
 Hosted topology (see `docs/tech-stack.md`): `apps/web` is a Next.js app on
-Vercel. The homepage (`/`) is a ChatGPT-style storefront chat
-(`components/chat/`, `POST /api/chat`): a Claude-powered concierge that
-reuses the MCP tool builders via `lib/chat-tools.ts` (Vercel AI SDK
-`streamText` + the same `ADVERTEK_TOOL_GUIDANCE` descriptions), gated on
-`ANTHROPIC_API_KEY` (clean 503 when unset) and rate-limited per IP.
-`POST /api/artwork` is the Vercel Blob client-upload token exchange for chat
-artwork, gated on `BLOB_READ_WRITE_TOKEN`. The old developer landing page
-lives at `/rail`. The app also holds `POST /api/quotes`, the remote MCP
+Vercel. The homepage (`/`) is a static marketing page; the ChatGPT-style
+storefront chat lives at `/demo` (`components/chat/`, `POST /api/chat`): a
+Claude-powered concierge that reuses the MCP tool builders via
+`lib/chat-tools.ts` (Vercel AI SDK `streamText` + the same
+`ADVERTEK_TOOL_GUIDANCE` descriptions, plus chat-only `render_mockup` and
+`get_order_status` tools), gated on `ANTHROPIC_API_KEY` (clean 503 when
+unset; identity-linked keys also need `ANTHROPIC_WORKSPACE_ID`) and
+rate-limited per IP. Chat stream errors log server-side and surface
+verbatim in the UI banner. Adaptive
+extended thinking streams into the UI, and uploaded artwork is sent as
+image file parts so the model can see it. `POST /api/artwork` exchanges for
+a Supabase Storage signed upload URL (public `artwork` bucket, 50MB; gated
+on `NEXT_PUBLIC_SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY`); the browser
+PUTs the file straight to storage. The demo order simulator
+(`/api/demo/orders/[id]` + `/pay`, gated on `DEMO_SIMULATOR=true`) fakes
+payment confirmation and production status ticks for the chat's live order
+tracker — always demo-labeled, never real settlement. The app also holds `POST /api/quotes`, the remote MCP
 endpoint (`app/api/mcp/route.ts` via `mcp-handler`, Streamable HTTP — shares
 `registerAdvertekTools` with the stdio server), and the QuickNode/Advertek
 webhook route handlers. The site's visual system is monochrome

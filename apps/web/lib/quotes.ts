@@ -1,4 +1,5 @@
 import {
+  convertCadCentsToUsdcBaseUnits,
   createHttpAdvertekPricingClient,
   createHttpSpotRateClient,
   createRealtimeQuote,
@@ -6,8 +7,11 @@ import {
   tryLoadAdvertekPricingConfig,
   tryLoadSpotRateConfig,
   type AdvertekPricingClient,
+  type RealtimeQuote,
   type SpotRateClient,
 } from "@advertek/quote-api";
+import { getPodPriceListEntry, mapProductLineToPrintProcess } from "@advertek/catalog";
+import { skuSpecSchema, type SkuSpec } from "@advertek/types";
 import { loadSettlementPublicConfig } from "@advertek/payments";
 import type {
   CreateOrderExecutor,
@@ -33,6 +37,45 @@ export interface QuoteExecutors {
 const MOCK_USDC_BASE_UNITS_PER_CAD_DOLLAR = 730_000n;
 /** Fixed CAD price stub used only when no pricing endpoint is configured. */
 const MOCK_PRICE_CAD_CENTS = 12_500n;
+
+export interface WithPodSkuPricingDeps {
+  readonly inner: QuoteExecutor;
+  readonly spotRateClient: SpotRateClient;
+  readonly now?: () => Date;
+}
+
+/**
+ * Prices print-on-demand specs from the checked-in POD price list (MSRP —
+ * the same figures `get_sku_quote` charges) so order intake, which re-prices
+ * every item through this executor, agrees with the SKU quote the customer
+ * saw. Everything else — non-POD product lines, unknown materials, invalid
+ * specs — delegates to the wrapped executor unchanged.
+ */
+export function withPodSkuPricing(deps: WithPodSkuPricingDeps): QuoteExecutor {
+  const now = deps.now ?? ((): Date => new Date());
+  return async (input: SkuSpec): Promise<RealtimeQuote> => {
+    const parsed = skuSpecSchema.safeParse(input);
+    if (!parsed.success || parsed.data.productLine !== "printOnDemand") {
+      return deps.inner(input);
+    }
+    const entry = getPodPriceListEntry(parsed.data.stock.material);
+    if (entry === undefined) {
+      return deps.inner(input);
+    }
+    const priceCadCents = entry.msrpCadCents * BigInt(parsed.data.quantity);
+    const usdcBaseUnitsPerCadDollar = await deps.spotRateClient.getUsdcBaseUnitsPerCadDollar();
+    return {
+      spec: parsed.data,
+      printProcess: mapProductLineToPrintProcess("printOnDemand"),
+      priceCad: { currency: "CAD", amountCents: priceCadCents },
+      priceUsdc: {
+        currency: "USDC",
+        amountBaseUnits: convertCadCentsToUsdcBaseUnits(priceCadCents, usdcBaseUnitsPerCadDollar),
+      },
+      quotedAt: now(),
+    };
+  };
+}
 
 /**
  * Shared quote + order-intake wiring for the REST (`/api/quotes`,
@@ -63,7 +106,10 @@ export function createQuoteExecutors(): QuoteExecutors {
       ? { quoteCadCents: (): Promise<bigint> => Promise.resolve(MOCK_PRICE_CAD_CENTS) }
       : createHttpAdvertekPricingClient(pricingConfig);
 
-  const executeQuote = createRealtimeQuote({ pricingClient, spotRateClient });
+  const executeQuote = withPodSkuPricing({
+    inner: createRealtimeQuote({ pricingClient, spotRateClient }),
+    spotRateClient,
+  });
 
   return {
     spotRateClient,

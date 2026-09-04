@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import type { SkuSpec } from "@advertek/types";
 import type { OrderStatusView } from "@advertek/db";
-import { createChatTools, type ChatToolDeps } from "./chat-tools";
+import { createOrderRequestSchema } from "@advertek/mcp-server";
+import { chatCreateOrderInputSchema, createChatTools, type ChatToolDeps } from "./chat-tools";
 import type { QuoteExecutors } from "./quotes";
 
 const spec: SkuSpec = {
@@ -144,6 +145,27 @@ describe("createChatTools", () => {
       },
     });
     expect(() => JSON.stringify(result)).not.toThrow();
+  });
+
+  it("validates create_order input to a JSON-safe value the stream can serialize", () => {
+    // Regression: the AI SDK streams the *validated* input to the browser;
+    // a bigint from customsValueUsdCents coercion killed the whole stream.
+    const validated: unknown = chatCreateOrderInputSchema.parse({
+      payerPublicKey: "Payer1111111111111111111111111111111111111",
+      order: {
+        customerOrderNumber: "web-2026-09-04",
+        locationCode: "TOR-01",
+        shippingService: "ground",
+        orderType: "standard",
+        soldTo: address(),
+        shipTo: address(),
+        items: [{ internalItemId: "item-1", customsValueUsdCents: 2459, spec, options: [] }],
+      },
+    });
+    expect(() => JSON.stringify(validated)).not.toThrow();
+    // The executor-side re-parse restores the bigint exactly.
+    const restored = createOrderRequestSchema.parse(validated);
+    expect(restored.order.items[0]?.customsValueUsdCents).toBe(2459n);
   });
 
   it("returns the order status timeline with stringified money and ISO dates", async () => {

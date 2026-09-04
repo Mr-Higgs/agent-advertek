@@ -78,13 +78,13 @@ Use when functionality is not operational.
 
 If backend x402 implementation does not exist:
 
-• add architecture support where appropriate
-• prepare interfaces and components
-• prepare documentation placeholders
-• mark functionality clearly as coming soon
-• do not fake transactions
-• do not fake payment confirmation
-• do not display fabricated transaction hashes
+    • add architecture support where appropriate
+    • prepare interfaces and components
+    • prepare documentation placeholders
+    • mark functionality clearly as coming soon
+    • do not fake transactions
+    • do not fake payment confirmation
+    • do not display fabricated transaction hashes
 
 ## Target architecture:
 

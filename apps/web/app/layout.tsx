@@ -4,7 +4,7 @@ import { Archivo, IBM_Plex_Mono, IBM_Plex_Sans, Instrument_Serif } from "next/fo
 import "./globals.css";
 import { GlobalHeader } from "@/components/site/header";
 import { GlobalFooter } from "@/components/site";
-import { createMetadata } from "@/lib/site-config";
+import { createMetadata, siteName, siteUrl } from "@/lib/site-config";
 
 const display = Archivo({
   subsets: ["latin"],
@@ -37,6 +37,14 @@ const mono = IBM_Plex_Mono({
 
 export const metadata: Metadata = createMetadata("home");
 
+const organizationJsonLd = JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  name: siteName,
+  url: siteUrl,
+  logo: `${siteUrl}/logo/Advertek_Agent.png`,
+});
+
 export default function RootLayout({ children }: { readonly children: ReactNode }) {
   return (
     <html
@@ -44,6 +52,10 @@ export default function RootLayout({ children }: { readonly children: ReactNode 
       className={`${display.variable} ${serif.variable} ${sans.variable} ${mono.variable}`}
     >
       <body className="flex flex-col min-h-screen">
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: organizationJsonLd }}
+        />
         <a
           href="#main-content"
           className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-[60] focus:bg-ink focus:text-paper focus:px-4 focus:py-2"

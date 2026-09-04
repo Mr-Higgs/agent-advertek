@@ -1,4 +1,4 @@
-import { ACCENT, NAVY } from "./theme";
+import { ACCENT } from "./theme";
 
 interface CropMarkProps {
   readonly className?: string;
@@ -30,20 +30,6 @@ export function RegMark() {
       <circle cx="13" cy="13" r="9" stroke={ACCENT} strokeWidth="1" />
       <line x1="13" y1="1" x2="13" y2="25" stroke={ACCENT} strokeWidth="1" />
       <line x1="1" y1="13" x2="25" y2="13" stroke={ACCENT} strokeWidth="1" />
-    </svg>
-  );
-}
-
-interface AdvertekMarkProps {
-  readonly size?: number;
-}
-
-/** The Advertek Agent mark, simplified: a sliver and a chevron forming the "A", struck in solid ink. */
-export function AdvertekMark({ size = 28 }: AdvertekMarkProps) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 100 100" aria-hidden="true">
-      <polygon points="38,86 50,14 58,14 46,86" fill={ACCENT} />
-      <polygon points="50,14 86,86 68,86 50,48 32,86 22,86" fill={NAVY} />
     </svg>
   );
 }

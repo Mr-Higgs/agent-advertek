@@ -9,6 +9,7 @@ import type {
 } from "@advertek/mcp-server";
 import { themes } from "../theme";
 import { CropMark } from "../icons";
+import { OrderTrackerCard, type TrackerEvent } from "./order-tracker-card";
 
 /**
  * Tool results rendered as print-shop job tickets: hairline rules, mono
@@ -40,7 +41,7 @@ function formatUsdcBaseUnits(amountBaseUnits: string): string {
 
 /* ---------- shared ticket chrome ---------- */
 
-function Ticket({
+export function Ticket({
   label,
   children,
 }: {
@@ -69,7 +70,7 @@ function Ticket({
   );
 }
 
-function Row({ k, v }: { readonly k: string; readonly v: React.ReactNode }) {
+export function Row({ k, v }: { readonly k: string; readonly v: React.ReactNode }) {
   return (
     <div
       className="flex items-baseline justify-between gap-4 py-1.5 border-b last:border-b-0"
@@ -210,49 +211,92 @@ export function SkuQuoteCard({
 }
 
 export function PaymentRequestCard({ result }: { readonly result: CreateOrderToolResult }) {
+  const [simState, setSimState] = useState<"idle" | "pending" | "paid" | "unavailable">("idle");
   const order = result.order;
   if (order === undefined) return null;
   const decimalAmount = insertDecimal(order.amountBaseUnits, order.usdcDecimals).replace(/,/g, "");
   const solanaPayUrl = `solana:${order.settlementWallet}?amount=${decimalAmount}&spl-token=${order.usdcMintAddress}&memo=${encodeURIComponent(order.memo)}`;
+
+  const simulatePayment = () => {
+    setSimState("pending");
+    fetch(`/api/demo/orders/${encodeURIComponent(order.orderId)}/pay`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ amountBaseUnits: order.amountBaseUnits }),
+    })
+      .then(async (response) => {
+        const data = (await response.json().catch(() => undefined)) as { ok?: boolean } | undefined;
+        setSimState(response.ok && data?.ok === true ? "paid" : "unavailable");
+      })
+      .catch(() => {
+        setSimState("unavailable");
+      });
+  };
+
   return (
-    <Ticket label="Payment request">
-      <div className="font-serif text-4xl leading-none mb-1">
-        {formatUsdcBaseUnits(order.amountBaseUnits)}
-      </div>
-      <div className="font-mono text-[12px] mb-4" style={{ color: t.ticketMid }}>
-        pay exactly this amount, memo attached, in one transaction
-      </div>
-      <Row k="Order" v={order.orderId} />
-      <Row
-        k="Pay to"
-        v={
-          <span className="inline-flex items-center gap-2">
-            {order.settlementWallet}
-            <CopyButton value={order.settlementWallet} />
-          </span>
-        }
-      />
-      <Row
-        k="Memo"
-        v={
-          <span className="inline-flex items-center gap-2">
-            {order.memo}
-            <CopyButton value={order.memo} />
-          </span>
-        }
-      />
-      <Row k="USDC mint" v={order.usdcMintAddress} />
-      <a
-        href={solanaPayUrl}
-        className="block text-center font-mono text-[12px] uppercase tracking-widest mt-4 px-4 py-3"
-        style={{ backgroundColor: t.accent, color: t.accentContrast }}
-      >
-        Open in wallet
-      </a>
-      <p className="font-mono text-[10px] uppercase tracking-wider mt-3" style={{ color: t.ticketMid }}>
-        A transfer without this memo, amount, or address is not credited
-      </p>
-    </Ticket>
+    <>
+      <Ticket label="Payment request">
+        <div className="font-serif text-4xl leading-none mb-1">
+          {formatUsdcBaseUnits(order.amountBaseUnits)}
+        </div>
+        <div className="font-mono text-[12px] mb-4" style={{ color: t.ticketMid }}>
+          pay exactly this amount, memo attached, in one transaction
+        </div>
+        <Row k="Order" v={order.orderId} />
+        <Row
+          k="Pay to"
+          v={
+            <span className="inline-flex items-center gap-2">
+              {order.settlementWallet}
+              <CopyButton value={order.settlementWallet} />
+            </span>
+          }
+        />
+        <Row
+          k="Memo"
+          v={
+            <span className="inline-flex items-center gap-2">
+              {order.memo}
+              <CopyButton value={order.memo} />
+            </span>
+          }
+        />
+        <Row k="USDC mint" v={order.usdcMintAddress} />
+        <a
+          href={solanaPayUrl}
+          className="block text-center font-mono text-[12px] uppercase tracking-widest mt-4 px-4 py-3"
+          style={{ backgroundColor: t.accent, color: t.accentContrast }}
+        >
+          Open in wallet
+        </a>
+        {simState === "paid" ? null : (
+          <button
+            type="button"
+            disabled={simState === "pending"}
+            className="block w-full text-center font-mono text-[12px] uppercase tracking-widest mt-2 px-4 py-3 border disabled:opacity-40"
+            style={{ borderColor: t.text, color: t.text, backgroundColor: t.ticketBg }}
+            onClick={simulatePayment}
+          >
+            {simState === "pending" ? "Simulating…" : "Simulate payment (demo)"}
+          </button>
+        )}
+        {simState === "unavailable" ? (
+          <p className="font-mono text-[10px] uppercase tracking-wider mt-2" style={{ color: t.ticketMid }}>
+            Simulator disabled on this deployment
+          </p>
+        ) : null}
+        <p className="font-mono text-[10px] uppercase tracking-wider mt-3" style={{ color: t.ticketMid }}>
+          A transfer without this memo, amount, or address is not credited · demo button moves no funds
+        </p>
+      </Ticket>
+      {simState === "paid" ? (
+        <OrderTrackerCard
+          orderId={order.orderId}
+          initialStatus="paid"
+          initialEvents={[{ status: "paid", occurredAt: new Date().toISOString() }]}
+        />
+      ) : null}
+    </>
   );
 }
 
@@ -264,17 +308,12 @@ export interface OrderStatusResult {
 }
 
 export function OrderStatusCard({ result }: { readonly result: OrderStatusResult }) {
-  if (!result.ok || result.status === undefined) return null;
+  if (!result.ok || result.status === undefined || result.orderId === undefined) return null;
+  const events: readonly TrackerEvent[] = (result.events ?? []).map((event) => ({
+    status: event.status,
+    occurredAt: event.occurredAt,
+  }));
   return (
-    <Ticket label={`Order ${result.orderId ?? ""}`}>
-      <div className="font-serif text-3xl leading-none mb-4">{result.status}</div>
-      {(result.events ?? []).map((event) => (
-        <Row
-          k={new Date(event.occurredAt).toLocaleString("en-CA", { dateStyle: "medium", timeStyle: "short" })}
-          v={event.status}
-          key={`${event.status}-${event.occurredAt}`}
-        />
-      ))}
-    </Ticket>
+    <OrderTrackerCard orderId={result.orderId} initialStatus={result.status} initialEvents={events} />
   );
 }

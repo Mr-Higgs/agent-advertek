@@ -7,6 +7,8 @@ import {
   validateUIMessages,
 } from "ai";
 import { createAnthropic } from "@ai-sdk/anthropic";
+import type { LanguageModel } from "ai";
+import type { ChatConfig } from "@/lib/chat-config";
 import { z } from "zod";
 import { readOrderStatus } from "@advertek/db";
 import { tryLoadChatConfig } from "@/lib/chat-config";
@@ -17,7 +19,7 @@ import { createQuoteExecutors } from "@/lib/quotes";
 import { checkRateLimit, clientIpAddress } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
-export const maxDuration = 60;
+export const maxDuration = 120;
 
 /**
  * The storefront concierge behind the homepage chat. Public by design (it is
@@ -26,30 +28,72 @@ export const maxDuration = 60;
  * builders the MCP transports use, never from the model.
  */
 
-const SYSTEM_PROMPT = `You are the print concierge for Advertek, a real commercial printer in North York, Ontario (offset, digital, wide format, book manufacturing, dye sublimation, wall decor, direct mail, embellishments, packaging, bindery, and print-on-demand). Visitors tell you what they want made; you find it, price it, and place the order.
+/**
+ * Demo-only payer: the Solana System Program address. It satisfies
+ * create_order's base58 schema while being unmistakably not a customer
+ * wallet — payment in this demo is simulated, never collected.
+ */
+const DEMO_PAYER_PUBLIC_KEY = "11111111111111111111111111111111";
+
+const SYSTEM_PROMPT = `You are the print concierge for Advertek, a real commercial printer in North York, Ontario. Customers bring you artwork; you turn it into printed products: look at what they uploaded, recommend products from the print-on-demand catalog, preview it, price it, and place the order. The whole experience should feel as easy as ordering a pizza.
 
 Ground rules:
-- Never invent prices, SKU codes, product names, order ids, or statuses. Every figure you state must come from a tool result. If you have not called get_catalog yet and the customer asks what exists or you are unsure of valid enums, call it first.
-- Prices are quoted in CAD and settled in USDC on Solana. Tool results carry money as integer strings in minor units: CAD cents (divide by 100) and USDC base units (6 decimals). Present them as human currency ("CAD $12.50", "9.13 USDC"), and round USDC display to 2 decimals while making clear the payable amount is exact.
+- Never invent prices, SKU codes, product names, order ids, or statuses. Every figure you state must come from a tool result. If you have not called get_catalog yet and you are unsure which SKUs exist, call it first.
+- Prices are quoted in CAD and settled in USDC on Solana. Tool results carry money as integer strings in minor units: CAD cents (divide by 100) and USDC base units (6 decimals). Present them as human currency ("CAD $12.90", "9.13 USDC"), and round USDC display to 2 decimals while making clear the payable amount is exact.
 - When a tool result carries demoPricing: true, tell the customer the figure is a non-binding demo price.
 - If a tool returns ok: false, read its issues, fix your input, and retry. Do not surface raw error objects; explain the problem plainly.
 
-Ordering flow — collect all of this before calling create_order:
-1. What they want: either a print-on-demand SKU from the catalog (quote it with get_sku_quote) or a custom job as a full spec (quote it with get_quote: productLine, dimensions in mm, stock material + weight in gsm, finish array, quantity, turnaround).
-2. Artwork: every item needs at least one print-ready file as an https URL. The customer can attach a file with the paperclip (it arrives in their message as an "Artwork:" URL) or paste a link. Do not order without it.
-3. Ship-to and sold-to: name, address1, city, postal_code, country_code (2-letter), region_code where applicable. Usually the same; ask once and reuse unless told otherwise.
-4. The Solana wallet that will pay: a base58 public key. The payment comes from the customer's own wallet; you never handle funds.
+When artwork arrives (the customer attaches a file with the paperclip; it appears in their message as an "Artwork:" URL, and viewable images are also attached so you can see them):
+1. Look at the image and describe it in one or two sentences — subject, palette, orientation (portrait, landscape, or square).
+2. Recommend two to four catalog products that suit it, matching orientation: vertical art suits TEE-CN-V-* shirts, PUZ-315-V / PUZ-1000-V puzzles, TWL-3060-V towels, and portrait canvas sizes; horizontal art suits the -H variants and landscape canvas sizes. State prices only from tool results.
+3. If you cannot view the file (PDF, TIFF, SVG), say so and ask for a one-line description of the art instead.
 
-You supply sensible values the customer should not be asked about: customerOrderNumber (derive one from the date, e.g. "web-2026-08-31-1"), internalItemId per item ("item-1", "item-2", ...), customsValueUsdCents from the quoted price, locationCode "TOR-01", shippingService "ground", orderType "standard". For a print-on-demand SKU, build the item spec as productLine "printOnDemand" with the product's nominal dimensions in mm, stock.material set to the SKU code, stock.weight 200, finish ["none"], and the customer's chosen quantity — the rail re-prices at intake and its returned amount is authoritative.
+Once they pick a product, call render_mockup with the SKU and the artwork URL — the chat renders a live preview card — then quote it with get_sku_quote. Describe the preview in a few words, give the price, and ask for what is still missing.
 
-After create_order succeeds, present the payment request exactly: the order id, and the instruction to send exactly amountBaseUnits of the given USDC mint to settlementWallet in a single Solana transaction carrying the memo string verbatim in a Memo-program instruction. The memo is how the payment is matched to the order; a transfer without it, with a different amount, or to a different address is not credited. Never restate the amount from memory — copy it from the tool result. Use get_order_status when they ask whether payment landed or where the order is.
+Keep questions minimal. Ask only for: the product choice (plus size or shirt size where the catalog has variants), quantity (default 1), and the ship-to name and address (address1, city, postal_code, 2-letter country_code, region_code where applicable). Use the ship-to as sold-to unless told otherwise.
 
-Style: plain prose, short paragraphs, sentence case. No markdown tables, no headings, no emoji. Be concrete and quick — one question at a time when gathering details. You are a shop counter, not a chatbot: confirm what was ordered, what it costs, and what happens next.`;
+You supply everything else yourself: customerOrderNumber (derive one from the date, e.g. "web-2026-09-03-1"), internalItemId per item ("item-1", "item-2", ...), customsValueUsdCents from the quoted price, locationCode "TOR-01", shippingService "ground", orderType "standard". For a print-on-demand SKU, build the item spec as productLine "printOnDemand" with the product's nominal dimensions in mm, stock.material set to the SKU code, stock.weight 200, finish ["none"], the chosen quantity, and assets [{ url: the artwork URL }] — the rail re-prices at intake and its returned amount is authoritative. This is a demo deployment: use payerPublicKey "${DEMO_PAYER_PUBLIC_KEY}" (a placeholder — never ask the customer for a wallet; payment here is simulated).
+
+Before calling create_order, confirm the order in one line — product, quantity, total — and get an explicit yes.
+
+After create_order succeeds, the chat shows a payment-request card. Tell the customer they can pay from a Solana wallet with the memo shown, or — since this is a demo — press the "Simulate payment (demo)" button on the card; no real funds move. When they say they have paid or ask where the order is, call get_order_status once: the chat renders a live tracker that follows the order to completion on its own, so never call it repeatedly for the same order.
+
+For custom jobs outside the POD catalog, quote with get_quote (full spec: productLine, dimensions in mm, stock material + weight in gsm, finish array, quantity, turnaround); the same rules apply otherwise.
+
+Style: plain prose, short paragraphs, sentence case. No markdown of any kind — the chat renders raw text, so asterisks, bullet markers, tables, headings, and emoji all show as literal characters. Separate options with line breaks and simple dashes. Be concrete and quick — at most one question at a time. You are a shop counter, not a chatbot: confirm what was ordered, what it costs, and what happens next.`;
 
 const bodySchema = z.object({
   // ponytail: shallow cap only — validateUIMessages does the deep validation.
   messages: z.array(z.unknown()).min(1).max(60),
 });
+
+function chatModel(config: ChatConfig): LanguageModel {
+  console.log(`chat: model=${config.modelId} via anthropic`);
+  const anthropic = createAnthropic({
+    apiKey: config.apiKey,
+    ...(config.workspaceId !== undefined
+      ? { headers: { "anthropic-workspace-id": config.workspaceId } }
+      : {}),
+  });
+  return anthropic(config.modelId);
+}
+
+const MAX_ERROR_MESSAGE_CHARS = 300;
+
+/**
+ * Logs the full stream error server-side and forwards a readable message to
+ * the chat UI — deliberate for this demo route: the masked default ("An
+ * error occurred") hides actionable problems like provider tier limits.
+ */
+function describeStreamError(error: unknown): string {
+  console.error("Chat stream error:", error);
+  const message = error instanceof Error ? error.message : String(error);
+  const trimmed = message.trim();
+  if (trimmed.length === 0) return "The model request failed";
+  return trimmed.length > MAX_ERROR_MESSAGE_CHARS
+    ? `${trimmed.slice(0, MAX_ERROR_MESSAGE_CHARS)}…`
+    : trimmed;
+}
 
 export async function POST(request: Request): Promise<Response> {
   const config = tryLoadChatConfig();
@@ -83,9 +127,8 @@ export async function POST(request: Request): Promise<Response> {
     return jsonResponse({ ok: false, error: "Invalid chat messages" }, { status: 400 });
   }
 
-  const anthropic = createAnthropic({ apiKey: config.apiKey });
   const result = streamText({
-    model: anthropic(config.modelId),
+    model: chatModel(config),
     instructions: SYSTEM_PROMPT,
     messages: modelMessages,
     tools: createChatTools({
@@ -93,9 +136,19 @@ export async function POST(request: Request): Promise<Response> {
       getOrderStatus: (orderId) => readOrderStatus(getDb(), orderId),
     }),
     stopWhen: isStepCount(config.maxSteps),
+    // Adaptive is the only thinking mode claude-sonnet-5 accepts, and
+    // "summarized" display is required — the default omits thinking text,
+    // which would leave the chat's reasoning stream empty.
+    providerOptions: {
+      anthropic: { thinking: { type: "adaptive", display: "summarized" } },
+    },
   });
 
   return createUIMessageStreamResponse({
-    stream: toUIMessageStream({ stream: result.stream }),
+    stream: toUIMessageStream({
+      stream: result.stream,
+      sendReasoning: true,
+      onError: describeStreamError,
+    }),
   });
 }

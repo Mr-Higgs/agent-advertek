@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport, type UIMessage } from "ai";
-import { upload } from "@vercel/blob/client";
 import { themes } from "@/components/theme";
 import { CropMark } from "@/components/icons";
 import { MessageParts } from "./message-parts";
@@ -16,7 +15,11 @@ const STORAGE_KEY = "advertek-demo-chat-v1";
 interface Attachment {
   readonly name: string;
   readonly url: string;
+  readonly mediaType: string;
 }
+
+/** Image types Claude can view; TIFF/SVG/PDF upload fine but stay URL-only. */
+const VISION_MEDIA_TYPES = ["image/png", "image/jpeg", "image/webp"];
 
 function readStoredMessages(): UIMessage[] {
   try {
@@ -90,7 +93,16 @@ export function DemoChat() {
         track("demo_started", { source: (demoPage.suggestedPrompts as readonly string[]).includes(trimmed) ? "example" : "custom" });
         startedTracked.current = true;
       }
-      void sendMessage({ text: [trimmed, ...artworkLines].filter(Boolean).join("\n") });
+      // Viewable images also go up as file parts so the model can see the
+      // artwork; the "Artwork:" text line stays the canonical asset URL for
+      // order intake.
+      const fileParts = attachments
+        .filter((a) => VISION_MEDIA_TYPES.includes(a.mediaType))
+        .map((a) => ({ type: "file" as const, mediaType: a.mediaType, url: a.url, filename: a.name }));
+      void sendMessage({
+        text: [trimmed, ...artworkLines].filter(Boolean).join("\n"),
+        ...(fileParts.length > 0 ? { files: fileParts } : {}),
+      });
       track("demo_prompt_submitted");
       setInput("");
       setAttachments([]);
@@ -104,13 +116,34 @@ export function DemoChat() {
     if (file === undefined) return;
     setUploading(true);
     setUploadError(undefined);
-    upload(`artwork/${file.name}`, file, { access: "public", handleUploadUrl: "/api/artwork" })
-      .then((blob) => {
-        setAttachments((prev) => [...prev, { name: file.name, url: blob.url }]);
+    // Two hops: exchange for a signed Supabase Storage URL, then upload the
+    // file straight there (serverless bodies cap at ~4.5MB, print files don't).
+    fetch("/api/artwork", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ filename: file.name, contentType: file.type }),
+    })
+      .then(async (response) => {
+        const data = (await response.json()) as {
+          ok?: boolean;
+          uploadUrl?: string;
+          publicUrl?: string;
+        };
+        const { uploadUrl, publicUrl } = data;
+        if (!response.ok || data.ok !== true || uploadUrl === undefined || publicUrl === undefined) {
+          throw new Error("token exchange failed");
+        }
+        const put = await fetch(uploadUrl, {
+          method: "PUT",
+          headers: { "content-type": file.type },
+          body: file,
+        });
+        if (!put.ok) throw new Error("upload failed");
+        setAttachments((prev) => [...prev, { name: file.name, url: publicUrl, mediaType: file.type }]);
         track("artwork_attached");
       })
       .catch(() => {
-        setUploadError("Upload failed — try a PNG, JPEG, TIFF, SVG, or PDF under 100MB");
+        setUploadError("Upload failed — try a PNG, JPEG, TIFF, SVG, or PDF under 50MB");
       })
       .finally(() => { setUploading(false); });
   }, []);
@@ -155,19 +188,26 @@ export function DemoChat() {
                 </div>
               ) : null}
               {error !== undefined ? (
-                <div className="py-4 font-mono text-[11px] uppercase tracking-widest flex items-center gap-4" style={{ color: t.mid }}>
-                  Something went wrong.
-                  <button
-                    type="button"
-                    className="border px-3 py-1.5"
-                    style={{ borderColor: t.text, color: t.text }}
-                    onClick={() => {
-                      clearError();
-                      void regenerate();
-                    }}
-                  >
-                    Try again
-                  </button>
+                <div className="py-4">
+                  <div className="font-mono text-[11px] uppercase tracking-widest flex items-center gap-4" style={{ color: t.mid }}>
+                    Something went wrong.
+                    <button
+                      type="button"
+                      className="border px-3 py-1.5"
+                      style={{ borderColor: t.text, color: t.text }}
+                      onClick={() => {
+                        clearError();
+                        void regenerate();
+                      }}
+                    >
+                      Try again
+                    </button>
+                  </div>
+                  {error.message.trim().length > 0 ? (
+                    <p className="text-[12px] leading-relaxed mt-2 break-words" style={{ color: t.mid }}>
+                      {error.message}
+                    </p>
+                  ) : null}
                 </div>
               ) : null}
             </div>
@@ -184,6 +224,14 @@ export function DemoChat() {
                   className="inline-flex items-center gap-2 border px-2 py-1"
                   style={{ borderColor: t.line, color: t.midStrong }}
                 >
+                  {attachment.mediaType.startsWith("image/") ? (
+                    <img
+                      src={attachment.url}
+                      alt=""
+                      className="h-8 w-8 object-cover border"
+                      style={{ borderColor: t.line }}
+                    />
+                  ) : null}
                   {attachment.name}
                   <button
                     type="button"
